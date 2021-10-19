@@ -2,6 +2,7 @@
     background-color: $o-view-background-color;
     margin: 16px auto;
     padding: 24px 16px;
+    width: 100% !important;
     // Manage expand icon
     table.o_mrp_bom_expandable_custom {
         thead tr.o_mrp_bom_tr {

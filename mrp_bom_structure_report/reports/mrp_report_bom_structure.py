@@ -54,8 +54,8 @@ class ReportBomStructure(models.AbstractModel):
         }
 
     @api.model
-    def get_html(self, bom_id=False, searchQty=1, searchVariant=False):
-        res = self._get_report_data(bom_id=bom_id, searchQty=searchQty,
+    def get_html(self, bom_id=False, bom_ids=False, searchQty=1, searchVariant=False):
+        res = self._get_report_data(bom_id=bom_id, bom_ids=bom_ids, searchQty=searchQty,
                                     searchVariant=searchVariant)
         res['lines']['report_type'] = 'html'
         res['lines']['report_structure'] = 'all'
@@ -97,8 +97,9 @@ class ReportBomStructure(models.AbstractModel):
         return bom.display_name
 
     @api.model
-    def _get_report_data(self, bom_id, searchQty=0, searchVariant=False):
+    def _get_report_data(self, bom_id, bom_ids=False, searchQty=0, searchVariant=False):
         lines = {}
+        #if bom_ids:
         bom = self.env['mrp.bom'].browse(bom_id)
         bom_quantity = searchQty or bom.product_qty
         bom_product_variants = {}
@@ -181,11 +182,16 @@ class ReportBomStructure(models.AbstractModel):
         for line in bom.bom_line_ids:
             line_quantity = (bom_quantity / (
                 bom.product_qty or 1.0)) * line.product_qty
+            line_quantity_real = (bom_quantity / (
+                bom.product_qty or 1.0)) * line.product_qty_real
             if line._skip_bom_line(product):
                 continue
             price = line.product_id.uom_id._compute_price(
                 line.product_id.standard_price,
                 line.product_uom_id) * line_quantity
+            price_real = line.product_id.uom_id._compute_price(
+                line.product_id.standard_price,
+                line.product_uom_id) * line_quantity_real
             if line.child_bom_id:
                 factor = line.product_uom_id._compute_quantity(
                     line_quantity,
@@ -194,6 +200,14 @@ class ReportBomStructure(models.AbstractModel):
                 sub_total = self._get_price(line.child_bom_id, factor)
             else:
                 sub_total = price
+            if line.child_bom_id:
+                factor = line.product_uom_id._compute_quantity(
+                    line_quantity_real,
+                    line.child_bom_id.product_uom_id) / \
+                    line.child_bom_id.product_qty
+                sub_total_real = self._get_price(line.child_bom_id, factor)
+            else:
+                sub_total_real = price_real
             sub_total = self.env.user.company_id.currency_id.round(sub_total)
             components.append({
                 'prod_id': line.product_id.id,
@@ -201,12 +215,19 @@ class ReportBomStructure(models.AbstractModel):
                 'code': line.child_bom_id and self._get_bom_reference(
                     line.child_bom_id) or '',
                 'prod_qty': line_quantity,
+                'prod_qty_loss': line.loss,
+                'prod_qty_real': line_quantity_real,
+                'prod_qty_available': line.product_id.qty_available,
+                #'prod_qty_location': line.with_context(dict(self._context, location=bom.location_id)).product_id.qty_available,
+                'prod_incoming_qty': line.product_id.incoming_qty,
                 'prod_uom': line.product_uom_id.name,
                 'prod_cost': self.env.user.company_id.currency_id.round(price),
+                'prod_cost_real': self.env.user.company_id.currency_id.round(price_real),
                 'parent_id': bom.id,
                 'line_id': line.id,
                 'level': level or 0,
                 'total': sub_total,
+                'total_real': sub_total_real,
                 'child_bom': line.child_bom_id.id,
                 'phantom_bom': (line.child_bom_id and
                                 line.child_bom_id.type == 'phantom' or False),
