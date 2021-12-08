@@ -41,7 +41,7 @@
                                         <td>
                                             <span><a href="#" t-if="data['report_type'] == 'html'" t-att-data-res-id="data['bom'].id" t-att-data-model="'mrp.bom'" class="o_mrp_bom_action"><t t-esc="data['code']"/></a><t t-else="" t-esc="data['code']"/></span>
                                         </td>
-                                        <td class="text-right"><span><t t-esc="data['bom_qty']" t-options='{"widget": "float", "decimal_precision": "POM_report"}'/></span></td>
+                                        <td class="text-right"><span><t t-esc="data['bom_qty']" t-options='{"widget": "float", "decimal_precision": "BOM_report_quantity"}'/></span></td>
                                         <td groups="product.group_uom"><span><t t-esc="data['bom'].product_uom_id.name"/></span></td>
                                         <td t-if="data['report_structure'] != 'bom_cost'" class="o_mrp_prod_cost text-right">
                                             <span><t t-esc="data['price']" t-options='{"widget": "monetary", "display_currency": currency}'/></span>
@@ -109,7 +109,7 @@
                         <a href="#" t-att-data-res-id="l['child_bom']" t-att-data-model="'mrp.bom'" class="o_mrp_bom_action"><t t-esc="l['code']"/></a>
                   </span>
                 </td>
-                <td class="text-right"><span><t t-esc="l['prod_qty']" t-options='{"widget": "float", "decimal_precision": "POM_report"}'/></span></td>
+                <td class="text-right"><span><t t-esc="l['prod_qty']" t-options='{"widget": "float", "decimal_precision": "BOM_report_quantity"}'/></span></td>
                 <td groups="product.group_uom"><span><t t-esc="l['prod_uom']"/></span></td>
                 <td class="o_mrp_prod_cost text-right">
                     <span t-esc="l['prod_cost']" t-options='{"widget": "monetary", "display_currency": currency}'/>
@@ -117,8 +117,8 @@
                 <td class="o_mrp_bom_cost text-right">
                     <span t-esc="l['total']" t-options='{"widget": "monetary", "display_currency": currency}'/>
                 </td>
-                <td class="text-right"><span><t t-esc="l['prod_qty_available']" t-options='{"widget": "float", "decimal_precision": "POM_report"}'/></span></td>
-                <td class="text-right"><span><t t-esc="l['prod_incoming_qty']" t-options='{"widget": "float", "decimal_precision": "POM_report"}'/></span></td>
+                <td class="text-right"><span><t t-esc="l['prod_qty_available']" t-options='{"widget": "float", "decimal_precision": "BOM_report_quantity"}'/></span></td>
+                <td class="text-right"><span><t t-esc="l['prod_incoming_qty']" t-options='{"widget": "float", "decimal_precision": "BOM_report_quantity"}'/></span></td>
                 <td>
                     <span>
                         <t t-if="l['attachments']">
@@ -199,7 +199,7 @@
               <td class="text-right">
                   <span>
                       <t t-if="l['type'] == 'operation'" t-esc="l['quantity']" t-options='{"widget": "float_time"}'/>
-                      <t t-if="l['type'] == 'bom'" t-esc="l['quantity']" t-options='{"widget": "float", "decimal_precision": "POM_report"}'/>
+                      <t t-if="l['type'] == 'bom'" t-esc="l['quantity']" t-options='{"widget": "float", "decimal_precision": "BOM_report_money"}'/>
                   </span>
               </td>
               <td groups="product.group_uom"><span><t t-esc="l['uom']"/></span></td>

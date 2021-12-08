@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="decimal_precision_bom_report_quantity" model="decimal.precision">
+            <field name="name">BOM_report_quantity</field>
+            <field name="digits">3</field>
+        </record>
+        <record id="decimal_precision_bom_report_quantity" model="decimal.precision">
+            <field name="name">BOM_report_money</field>
+            <field name="digits">2</field>
+        </record>
+    </data>
+</odoo>

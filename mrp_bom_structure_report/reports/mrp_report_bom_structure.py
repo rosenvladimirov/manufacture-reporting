@@ -98,8 +98,8 @@ class ReportBomStructure(models.AbstractModel):
 
     @api.model
     def _get_report_data(self, bom_id, bom_ids=False, searchQty=0, searchVariant=False):
-        lines = {}
-        #if bom_ids:
+        # lines = {}
+        # if bom_ids:
         bom = self.env['mrp.bom'].browse(bom_id)
         bom_quantity = searchQty or bom.product_qty
         bom_product_variants = {}
@@ -120,10 +120,8 @@ class ReportBomStructure(models.AbstractModel):
             'variants': bom_product_variants,
             'bom_uom_name': bom_uom_name,
             'bom_qty': bom_quantity,
-            'is_variant_applied': self.env.user.user_has_groups(
-                'product.group_product_variant') and len(
-                bom_product_variants) > 1,
-            'is_uom_applied': self.env.user.user_has_groups('uom.group_uom')
+            'is_variant_applied': self.env.user.user_has_groups('product.group_product_variant') and len(bom_product_variants) > 1,
+            'is_uom_applied': self.env.user.user_has_groups('product.group_uom')
         }
 
     def _get_bom(self, bom_id=False, product_id=False, line_qty=False,
@@ -132,8 +130,7 @@ class ReportBomStructure(models.AbstractModel):
         bom_quantity = line_qty
         if line_id:
             current_line = self.env['mrp.bom.line'].browse(int(line_id))
-            bom_quantity = current_line.product_uom_id._compute_quantity(
-                line_qty, bom.product_uom_id)
+            bom_quantity = current_line.product_uom_id._compute_quantity(line_qty, bom.product_uom_id)
         # Display bom components for current selected product variant
         if product_id:
             product = self.env['product.product'].browse(int(product_id))
@@ -196,7 +193,7 @@ class ReportBomStructure(models.AbstractModel):
                 factor = line.product_uom_id._compute_quantity(
                     line_quantity,
                     line.child_bom_id.product_uom_id) / \
-                    line.child_bom_id.product_qty
+                         line.child_bom_id.product_qty
                 sub_total = self._get_price(line.child_bom_id, factor)
             else:
                 sub_total = price
@@ -204,7 +201,7 @@ class ReportBomStructure(models.AbstractModel):
                 factor = line.product_uom_id._compute_quantity(
                     line_quantity_real,
                     line.child_bom_id.product_uom_id) / \
-                    line.child_bom_id.product_qty
+                         line.child_bom_id.product_qty
                 sub_total_real = self._get_price(line.child_bom_id, factor)
             else:
                 sub_total_real = price_real
@@ -218,7 +215,7 @@ class ReportBomStructure(models.AbstractModel):
                 'prod_qty_loss': line.loss,
                 'prod_qty_real': line_quantity_real,
                 'prod_qty_available': line.product_id.qty_available,
-                #'prod_qty_location': line.with_context(dict(self._context, location=bom.location_id)).product_id.qty_available,
+                # 'prod_qty_location': line.with_context(dict(self._context, location=bom.location_id)).product_id.qty_available,
                 'prod_incoming_qty': line.product_id.incoming_qty,
                 'prod_uom': line.product_uom_id.name,
                 'prod_cost': self.env.user.company_id.currency_id.round(price),
@@ -249,8 +246,8 @@ class ReportBomStructure(models.AbstractModel):
                 qty / operation.workcenter_id.capacity, precision_rounding=1,
                 rounding_method='UP')
             duration_expected = operation_cycle * operation.time_cycle + \
-                operation.workcenter_id.time_stop + \
-                operation.workcenter_id.time_start
+                                operation.workcenter_id.time_stop + \
+                                operation.workcenter_id.time_start
             # Field costs_hours in mrp.workcenter does not exists in v11
             # total = ((duration_expected / 60.0) *
             # operation.workcenter_id.costs_hour)
@@ -322,7 +319,7 @@ class ReportBomStructure(models.AbstractModel):
                     'code': bom_line['code']
                 })
                 if bom_line['child_bom'] and (
-                        unfolded or bom_line['child_bom'] in child_bom_ids):
+                    unfolded or bom_line['child_bom'] in child_bom_ids):
                     line = self.env['mrp.bom.line'].browse(bom_line['line_id'])
                     lines += (get_sub_lines(line.child_bom_id, line.product_id,
                                             line.product_qty * data['bom_qty'],
@@ -350,7 +347,7 @@ class ReportBomStructure(models.AbstractModel):
 
         bom = self.env['mrp.bom'].browse(bom_id)
         product = product_id or bom.product_id or \
-            bom.product_tmpl_id.product_variant_id
+                  bom.product_tmpl_id.product_variant_id
         pdf_lines = get_sub_lines(bom, product, qty, False, 1)
         data['components'] = []
         data['lines'] = pdf_lines

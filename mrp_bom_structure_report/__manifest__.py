@@ -13,6 +13,7 @@
         "web",
     ],
     "data": [
+        "data/decimal_precision.xml",
         "views/mrp_bom_views.xml",
         "views/mrp_templates.xml",
         "reports/mrp_report_bom_structure.xml",
