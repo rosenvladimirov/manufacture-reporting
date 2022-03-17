@@ -7,6 +7,9 @@ import json
 from odoo import api, models, _
 from odoo.tools import float_round
 
+import logging
+_logger = logging.getLogger(__name__)
+
 
 class ReportBomStructure(models.AbstractModel):
     _name = 'report.mrp_bom_structure_report.report_bom_structure'
@@ -18,8 +21,15 @@ class ReportBomStructure(models.AbstractModel):
         for bom_id in docids:
             bom = self.env['mrp.bom'].browse(bom_id)
             variant = data and data.get('variant')
-            candidates = variant and self.env['product.product'].browse(
-                variant) or bom.product_tmpl_id.product_variant_ids
+            variants = data and data.get('variants')
+            if variants:
+                variants = list(map(int, json.loads(variants)))
+                _logger.info("VARIANTS %s" % variants)
+                candidates = self.env['product.product'].browse(variants)
+            else:
+                candidates = variant \
+                             and self.env['product.product'].browse(int(variant)) \
+                             or bom.product_tmpl_id.product_variant_ids
             for product_variant_id in candidates:
                 if data and data.get('childs'):
                     doc = self._get_pdf_line(bom_id,
@@ -54,9 +64,13 @@ class ReportBomStructure(models.AbstractModel):
         }
 
     @api.model
-    def get_html(self, bom_id=False, bom_ids=False, searchQty=1, searchVariant=False):
-        res = self._get_report_data(bom_id=bom_id, bom_ids=bom_ids, searchQty=searchQty,
-                                    searchVariant=searchVariant)
+    def get_html(self, bom_id=False, searchQty=1, searchVariant=False, bom_ids=False):
+        res = self._get_report_data(bom_id=bom_id, searchQty=searchQty,
+                                    searchVariant=searchVariant, bom_ids=bom_ids)
+        if bom_id or searchVariant:
+            bom = self.env['mrp.bom'].browse(bom_id)
+            res['variant'] = searchVariant or bom.product_tmpl_id.product_variant_id.id
+
         res['lines']['report_type'] = 'html'
         res['lines']['report_structure'] = 'all'
         res['lines']['has_attachments'] = res['lines']['attachments'] or any(
@@ -97,10 +111,14 @@ class ReportBomStructure(models.AbstractModel):
         return bom.display_name
 
     @api.model
-    def _get_report_data(self, bom_id, bom_ids=False, searchQty=0, searchVariant=False):
+    def _get_report_data(self, bom_id, searchQty=0, searchVariant=False, bom_ids=False):
         # lines = {}
         # if bom_ids:
         bom = self.env['mrp.bom'].browse(bom_id)
+        # if searchQty is not None:
+        #     searchQty = float(searchQty)
+        # if searchVariant is not None:
+        #     searchVariant = int(searchVariant)
         bom_quantity = searchQty or bom.product_qty
         bom_product_variants = {}
         bom_uom_name = ''
@@ -126,14 +144,23 @@ class ReportBomStructure(models.AbstractModel):
 
     def _get_bom(self, bom_id=False, product_id=False, line_qty=False,
                  line_id=False, level=False):
+
         bom = self.env['mrp.bom'].browse(bom_id)
         bom_quantity = line_qty
+
+        _logger.info("bom_quantity:%s / bom.product_qty:%s=>%s" % (line_qty, bom.product_qty, product_id))
+
         if line_id:
             current_line = self.env['mrp.bom.line'].browse(int(line_id))
             bom_quantity = current_line.product_uom_id._compute_quantity(line_qty, bom.product_uom_id)
         # Display bom components for current selected product variant
         if product_id:
-            product = self.env['product.product'].browse(int(product_id))
+            if isinstance(product_id, str):
+                product = self.env['product.product'].browse(int(product_id))
+            elif isinstance(product_id, int):
+                product = self.env['product.product'].browse(product_id)
+            else:
+                product = product_id
         else:
             product = bom.product_id or bom.product_tmpl_id.product_variant_id
         if product:
@@ -297,6 +324,8 @@ class ReportBomStructure(models.AbstractModel):
                       child_bom_ids=False, unfolded=False):
         if not child_bom_ids:
             child_bom_ids = []
+
+        _logger.info("_get_pdf_line %s" % product_id)
 
         data = self._get_bom(bom_id=bom_id, product_id=product_id,
                              line_qty=qty)

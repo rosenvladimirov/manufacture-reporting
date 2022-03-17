@@ -30,6 +30,9 @@ odoo.define('mrp.mrp_bom_report', function (require) {
             })
             .then(function (result) {
                 self.data = result;
+                if (self.given_context.searchVariant === undefined) {
+                    self.given_context.searchVariant = result.variant;
+                }
             });
         },
         set_html: function () {
@@ -108,19 +111,26 @@ odoo.define('mrp.mrp_bom_report', function (require) {
                 breadcrumbs: this.actionManager.get_breadcrumbs(),
                 cp_content: {
                     $buttons: this.$buttonPrint,
-                    $searchview_buttons: this.$searchView,
+                    $searchview_buttons: this.$searchview_buttons,
+                    $searchview: this.$searchView,
                 },
             };
             return this.update_control_panel(status);
         },
         renderSearch: function () {
             this.$buttonPrint = $(QWeb.render('mrp.button'));
-            this.$buttonPrint.filter('.o_mrp_bom_print').on('click', this._onClickPrint.bind(this));
-            this.$buttonPrint.filter('.o_mrp_bom_print_unfolded').on('click', this._onClickPrint.bind(this));
-            this.$searchView = $(QWeb.render('mrp.report_bom_search', _.omit(this.data, 'lines')));
-            this.$searchView.find('.o_mrp_bom_report_qty').on('change', this._onChangeQty.bind(this));
-            this.$searchView.find('.o_mrp_bom_report_variants').on('change', this._onChangeVariants.bind(this));
-            this.$searchView.find('.o_mrp_bom_report_type').on('change', this._onChangeType.bind(this));
+            this.$buttonPrint.find('.o_mrp_bom_print').on('click', this._onClickPrint.bind(this));
+            this.$buttonPrint.find('.o_mrp_bom_print_unfolded').on('click', this._onClickPrint.bind(this));
+            this.$searchview_buttons = $(QWeb.render('mrp.report_bom_search', _.omit(this.data, 'lines')));
+            this.$searchview_buttons.find('.o_mrp_bom_report_qty').on('change', this._onChangeQty.bind(this));
+            this.$searchview_buttons.find('.o_mrp_bom_report_variants').on('change', this._onChangeVariants.bind(this));
+            this.$searchview_buttons.find('.o_mrp_bom_report_type').on('change', this._onChangeType.bind(this));
+            this.$searchView = $(QWeb.render('mrp.report_print_variants', _.omit(this.data, 'lines')));
+            this.$searchView.find('.o_mrp_bom_report_print_variants').select2();
+            this.$searchView.find('.o_mrp_bom_report_print_variants').on('change', this._onMultiSelect.bind(this));
+        },
+        _onMultiSelect: function (ev) {
+            this.given_context.printVariants = ev.val;
         },
         _onClickPrint: function (ev) {
             var childBomIDs = _.map(this.$el.find('.o_mrp_bom_foldable').closest('tr'), function (el) {
@@ -134,6 +144,9 @@ odoo.define('mrp.mrp_bom_report', function (require) {
             }
             if (this.given_context.searchVariant) {
                 reportname += '&variant=' + this.given_context.searchVariant;
+            }
+            if (this.given_context.printVariants) {
+                reportname += '&variants=' + JSON.stringify(this.given_context.printVariants);
             }
             var action = {
                 'type': 'ir.actions.report',
@@ -205,6 +218,10 @@ odoo.define('mrp.mrp_bom_report', function (require) {
                 this.$('.o_mrp_bom_cost').toggleClass('o_hidden');
             }
             if (this.given_context.report_type === 'bom_cost') {
+                this.$('.o_mrp_prod_cost').toggleClass('o_hidden');
+            }
+            if (this.given_context.report_type === 'bom_only_qty') {
+                this.$('.o_mrp_bom_cost').toggleClass('o_hidden');
                 this.$('.o_mrp_prod_cost').toggleClass('o_hidden');
             }
         },
