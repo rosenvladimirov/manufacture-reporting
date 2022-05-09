@@ -11,6 +11,7 @@
     'website': 'https://github.com/rosenvladimirov/manufacture-reporting',
     'depends': [
         'mrp',
+        'project_mrp',
     ],
     'data': [
         'views/mrp_bom_view.xml',
