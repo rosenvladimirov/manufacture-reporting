@@ -11,4 +11,4 @@ _logger = logging.getLogger(__name__)
 class MrpBomLine(models.Model):
     _inherit = 'mrp.bom.line'
 
-    description = fields.Char('Description', translate=True)
+    description = fields.Char('Description')
