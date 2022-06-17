@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="mrp_order_planning.report_mrp_variant_html">
+        <div class="container" style="background: white; margin-top: 15px;">
+            <div class="page" size="A4_landscape" style="padding: 15px;">
+                <div class="row">
+                    <div class="col-xs-8">
+                        <h4>
+                            MRP Production Product Report
+                        </h4>
+                    </div>
+                    <div class="col-xs-4">
+                        <h5 t-if="orders">
+                            <span t-esc="', '.join([x.name for x in orders])"/>
+                        </h5>
+                    </div>
+                </div>
+<!--                <div class="page_break"/>-->
+                <div class="row">
+                    <div class="col-xs-12">
+                        <table style="width: 100%;" class="table table-condensed">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <span t-esc="headers[0]"/>
+                                    </th>
+                                    <th class="text-center" t-att-colspan="count_sub_headers">
+                                        <span t-esc="headers[1]"/>
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <t t-foreach="sub_headers" t-as="header_name">
+                                        <th class="text-center">
+                                            <span  t-esc="header_name"/>
+                                        </th>
+                                    </t>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="variants" t-as="page">
+                                    <t t-if="pages[page_index]">
+                                        <t t-if="page_index == 1">
+                                            <tr style="page-break-before: always;">
+                                                <td colspan="100" style="page-break-before: always;">
+                                                    <span t-esc="pages[page_index]"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <t t-else="">
+                                            <tr>
+                                                <td colspan="100">
+                                                    <span t-esc="pages[page_index]"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                    <t t-foreach="page[0].items()" t-as="line">
+                                        <t t-set="saved_other" t-value="False"/>
+                                        <tr t-if="line[0]">
+                                            <td colspan="100">
+                                                <span t-esc="line[0].name"/>
+                                            </td>
+                                        </tr>
+                                        <t t-foreach="line[1].items()" t-as="other">
+                                            <tr t-foreach="other[1].items()" t-as="var">
+                                                <t t-if="other[0] != saved_other">
+                                                    <td class="text-left" t-esc="other[0]"/>
+                                                    <t t-set="saved_other" t-value="other[0]"/>
+                                                </t>
+                                                <t t-else="">
+                                                    <td/>
+                                                </t>
+                                                <td class="text-left" t-esc="var[0].name"/>
+                                                <td class="text-center" t-foreach="sub_headers" t-as="field_name">
+                                                    <span t-esc="var[1][field_name]"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                </t>
+                            </tbody>
+                            <tfooter>
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="text-center" t-foreach="sub_headers" t-as="field_name">
+                                         <span t-esc="footers[field_name]"/>
+                                    </td>
+                                </tr>
+                            </tfooter>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    <template id="mrp_order_planning.mrp_variant_qweb">
+        <t t-call="web.external_layout">
+            <div class="page">
+                <div class="row">
+                    <div class="o_bulgaria_name">
+                        <div class="col-xs-8">
+                            <h4>
+                                MRP Production Product Report
+                            </h4>
+                        </div>
+                        <div class="col-xs-4">
+                            <h5 t-if="orders">
+                                <span t-esc="', '.join([x.name for x in orders])"/>
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+<!--                <div class="page_break"/>-->
+                <div class="row mt8" id="informations" name="informations">
+                    <div t-if="orders.client_order_ref" class="col-xs-2" name="ref">
+                        <strong>Your Reference:</strong>
+                        <p t-field="orders.client_order_ref"/>
+                    </div>
+                    <div class="col-xs-2" t-if="orders.partner_id.ref" name="code">
+                        <strong>Customer Code:</strong>
+                        <p t-field="orders.partner_id.ref"/>
+                    </div>
+                    <div t-if="orders.confirmation_date and orders.state not in ['draft','sent']" class="col-xs-2" name="date_oorder">
+                        <strong>Date Ordered:</strong>
+                        <p t-field="orders.confirmation_date" groups="!report_theming.group_show_date_ordered_date_format"/>
+                        <p t-field="orders.confirmation_date" t-options="{'widget': 'date'}" groups="report_theming.group_show_date_ordered_date_format"/>
+                    </div>
+                    <div t-if="orders.date_order and orders.state in ['draft','sent']" class="col-xs-2" name="date_quotation">
+                        <strong>Quotation Date:</strong>
+                        <p t-field="orders.date_order" groups="!report_theming.group_show_date_ordered_date_format"/>
+                        <p t-field="orders.date_order" t-options="{'widget': 'date'}" groups="report_theming.group_show_date_ordered_date_format"/>
+                    </div>
+                    <div t-if="orders.user_id.name" class="col-xs-2" name="sales_person">
+                        <strong>Salesperson:</strong>
+                        <p t-field="orders.user_id"/>
+                    </div>
+                    <div t-if="orders.payment_term_id" class="col-xs-2" name="payment_term">
+                        <strong>Payment Terms:</strong>
+                        <p t-field="orders.payment_term_id"/>
+                    </div>
+                    <div t-if="orders.validity_date and orders.state in ['draft', 'sent']" class="col-xs-2" name="date_expiration">
+                        <strong>Expiration Date:</strong>
+                        <p t-field="orders.validity_date" groups="!report_theming.group_show_date_ordered_date_format"/>
+                        <p t-field="orders.validity_date" t-options="{'widget': 'date'}" groups="report_theming.group_show_date_ordered_date_format"/>
+                    </div>
+                </div>
+                <div class="row mt8 mb8">
+                    <div class="col-xs-12">
+                        <table style="width: 100%;" class="table table-condensed">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <span t-esc="headers[0]"/>
+                                    </th>
+                                    <th class="text-center" t-att-colspan="count_sub_headers">
+                                        <span t-esc="headers[1]"/>
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <t t-foreach="sub_headers" t-as="header_name">
+                                        <th class="text-center">
+                                            <span  t-esc="header_name"/>
+                                        </th>
+                                    </t>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="variants" t-as="page">
+                                    <t t-if="pages[page_index]">
+                                        <t t-if="page_index == 1">
+                                            <tr style="page-break-before: always;">
+                                                <td colspan="100" style="page-break-before: always;">
+                                                    <span t-esc="pages[page_index]"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <t t-else="">
+                                            <tr>
+                                                <td colspan="100">
+                                                    <span t-esc="pages[page_index]"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                    <t t-foreach="page[0].items()" t-as="line">
+                                        <t t-set="saved_other" t-value="False"/>
+                                        <tr>
+                                            <td colspan="100">
+                                                <span t-esc="line[0].name"/>
+                                            </td>
+                                        </tr>
+                                        <t t-foreach="line[1].items()" t-as="other">
+                                            <tr t-foreach="other[1].items()" t-as="var">
+                                                <t t-if="other[0] != saved_other">
+                                                    <td class="text-left" t-esc="other[0]"/>
+                                                    <t t-set="saved_other" t-value="other[0]"/>
+                                                </t>
+                                                <t t-else="">
+                                                    <td/>
+                                                </t>
+                                                <td class="text-left" t-esc="var[0].name"/>
+                                                <td class="text-center" t-foreach="sub_headers" t-as="field_name">
+                                                    <span t-esc="var[1][field_name]"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                </t>
+                            </tbody>
+                            <tfooter>
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="text-center" t-foreach="sub_headers" t-as="field_name">
+                                         <span t-esc="footers[field_name]"/>
+                                    </td>
+                                </tr>
+                            </tfooter>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+    <template id="mrp_order_planning.mrp_variant">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="mrp_order_planning.mrp_variant_qweb"/>
+            </t>
+        </t>
+    </template>
+    <report id="action_print_customer_activity_statement"
+        model="res.partner"
+        report_type="qweb-pdf"
+        menu="False"
+        string="Report by variants"
+        name="mrp_order_planning.mrp_variant"
+        file="mrp_order_planning.mrp_variant"
+    />
+</odoo>

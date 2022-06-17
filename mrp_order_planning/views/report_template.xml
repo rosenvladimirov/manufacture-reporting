@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="mrp_production_variant_mgmt_assets_backend"
+              name="mrp_production_variant_mgmt assets" inherit_id="web.assets_backend">
+        <xpath expr="." position="inside">
+            <link href="/mrp_order_planning/static/src/css/report.less" rel="stylesheet"/>
+            <script type="text/javascript"
+                    src="/mrp_order_planning/static/src/js/mrp_order_planning_report_backend.js"/>
+            <script type="text/javascript"
+                    src="/mrp_order_planning/static/src/js/mrp_order_planning_report_widgets.js"/>
+        </xpath>
+    </template>
+
+</odoo>
