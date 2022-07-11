@@ -131,7 +131,7 @@ class MrpProductionReportProduct(models.AbstractModel):
 
     def get_report_header(self, order_id):
         values = self.env['product.attribute.value']
-        products = order_id.mapped('order_line').mapped('product_id')
+        products = order_id.mapped('product_id')
         for product in products:
             for line in product.attribute_value_ids:
                 if product.product_tmpl_id.attribute_line_ids.filtered(lambda r:
@@ -152,7 +152,7 @@ class MrpProductionReportProduct(models.AbstractModel):
         rows = self.env['product.attribute.value']
         others = self.env['product.attribute.value']
         sequence_others = {}
-        products = order_id.mapped('order_line').mapped('product_id')
+        products = order_id.mapped('product_id')
         for product in products:
             sequence_others[product] = 0
             inx = 0
@@ -178,15 +178,15 @@ dense_rank() OVER (ORDER BY sr.product_id)::int AS row_name,
 sr.product_id,
 string_agg(DISTINCT  vr.sequence::int || '+' || vr.name::varchar, ';') AS key,
 sr.name,
-sum(coalesce(product_uom_qty, 0.0)) AS product_uom_qty
+sum(coalesce(product_qty, 0.0)) AS product_uom_qty
 FROM mrp_production_report_product AS sr
 LEFT JOIN sale_report_variant_product AS vr
-    ON sr.product_id = vr.product_id WHERE order_id = %s """ + self._where_report() + """GROUP BY sr.product_id, sr.name
+    ON sr.product_id = vr.product_id WHERE production_id = ANY (%s) """ + self._where_report() + """GROUP BY sr.product_id, sr.name
 ORDER BY 2,3$$, $$VALUES %s$$""" % ",".join(["('%s')" % x.name for x in values]) + \
               ") AS t (%s)" % 'row_no int,product_id int,key varchar,%s' % ",".join(
             ['"%s" float' % x.name for x in values])
         _logger.info("SQL %s" % sql)
-        self.env.cr.execute(sql, (order_id.id,))
+        self.env.cr.execute(sql, (order_id.ids,))
         result = self.env.cr.dictfetchall()
         for line in result:
             line['product_id'] = self.env['product.product'].browse(line['product_id'])
@@ -238,10 +238,10 @@ ORDER BY 2,3$$, $$VALUES %s$$""" % ",".join(["('%s')" % x.name for x in values])
     mp.product_qty/(SELECT COUNT(id) FROM product_attribute_line cpl WHERE cpl.product_tmpl_id = pp.product_tmpl_id) as product_qty,
     mp.product_qty as attribute_product_qty,
     mp.id AS production_id,
-    so.date_planned_start AS date,
-    so.state,
+    mp.date_planned_start AS date,
+    mp.state,
     pp.product_tmpl_id AS product_tmpl_id,
-    so.company_id AS company_id,
+    mp.company_id AS company_id,
     pa.attribute_id,
     pa_pp.product_attribute_value_id AS attribute_value_id,
     mp.id as id
@@ -249,7 +249,7 @@ ORDER BY 2,3$$, $$VALUES %s$$""" % ",".join(["('%s')" % x.name for x in values])
         return sql
 
     def _from(self):
-        sql = """mrp.production AS mp
+        sql = """mrp_production AS mp
 LEFT JOIN product_product AS pp
     ON mp.product_id = pp.id
 INNER JOIN product_attribute_value_product_product_rel AS pa_pp

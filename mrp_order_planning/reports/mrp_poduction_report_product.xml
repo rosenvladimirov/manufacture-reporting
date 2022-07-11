@@ -101,51 +101,55 @@
             <div class="page">
                 <div class="row">
                     <div class="o_bulgaria_name">
-                        <div class="col-xs-8">
+                        <div class="col-xs-12">
                             <h4>
                                 MRP Production Product Report
                             </h4>
                         </div>
-                        <div class="col-xs-4">
-                            <h5 t-if="orders">
-                                <span t-esc="', '.join([x.name for x in orders])"/>
-                            </h5>
-                        </div>
+<!--                        <div class="col-xs-4">-->
+<!--                            <h5 t-if="orders">-->
+<!--                                <span t-esc="', '.join([x.name for x in orders])"/>-->
+<!--                            </h5>-->
+<!--                        </div>-->
                     </div>
                 </div>
 <!--                <div class="page_break"/>-->
                 <div class="row mt8" id="informations" name="informations">
-                    <div t-if="orders.client_order_ref" class="col-xs-2" name="ref">
+                    <div class="col-xs-6" name="ref">
+                        <strong>Your Order:</strong>
+                        <p t-esc="', '.join(orders.mapped('name'))"/>
+                    </div>
+                    <div t-if="orders.mapped('origin')" class="col-xs-6" name="ref">
                         <strong>Your Reference:</strong>
-                        <p t-field="orders.client_order_ref"/>
+                        <p t-esc="', '.join(orders.mapped('origin'))"/>
                     </div>
-                    <div class="col-xs-2" t-if="orders.partner_id.ref" name="code">
-                        <strong>Customer Code:</strong>
-                        <p t-field="orders.partner_id.ref"/>
-                    </div>
-                    <div t-if="orders.confirmation_date and orders.state not in ['draft','sent']" class="col-xs-2" name="date_oorder">
-                        <strong>Date Ordered:</strong>
-                        <p t-field="orders.confirmation_date" groups="!report_theming.group_show_date_ordered_date_format"/>
-                        <p t-field="orders.confirmation_date" t-options="{'widget': 'date'}" groups="report_theming.group_show_date_ordered_date_format"/>
-                    </div>
-                    <div t-if="orders.date_order and orders.state in ['draft','sent']" class="col-xs-2" name="date_quotation">
-                        <strong>Quotation Date:</strong>
-                        <p t-field="orders.date_order" groups="!report_theming.group_show_date_ordered_date_format"/>
-                        <p t-field="orders.date_order" t-options="{'widget': 'date'}" groups="report_theming.group_show_date_ordered_date_format"/>
-                    </div>
-                    <div t-if="orders.user_id.name" class="col-xs-2" name="sales_person">
-                        <strong>Salesperson:</strong>
-                        <p t-field="orders.user_id"/>
-                    </div>
-                    <div t-if="orders.payment_term_id" class="col-xs-2" name="payment_term">
-                        <strong>Payment Terms:</strong>
-                        <p t-field="orders.payment_term_id"/>
-                    </div>
-                    <div t-if="orders.validity_date and orders.state in ['draft', 'sent']" class="col-xs-2" name="date_expiration">
-                        <strong>Expiration Date:</strong>
-                        <p t-field="orders.validity_date" groups="!report_theming.group_show_date_ordered_date_format"/>
-                        <p t-field="orders.validity_date" t-options="{'widget': 'date'}" groups="report_theming.group_show_date_ordered_date_format"/>
-                    </div>
+<!--                    <div class="col-xs-2" t-if="orders.partner_id.ref" name="code">-->
+<!--                        <strong>Customer Code:</strong>-->
+<!--                        <p t-field="orders.mapped('partner_id').ref"/>-->
+<!--                    </div>-->
+<!--                    <div t-if="orders.confirmation_date and orders.state not in ['draft','sent']" class="col-xs-2" name="date_oorder">-->
+<!--                        <strong>Date Ordered:</strong>-->
+<!--                        <p t-field="orders.confirmation_date" groups="!report_theming.group_show_date_ordered_date_format"/>-->
+<!--                        <p t-field="orders.confirmation_date" t-options="{'widget': 'date'}" groups="report_theming.group_show_date_ordered_date_format"/>-->
+<!--                    </div>-->
+<!--                    <div t-if="orders.date_order and orders.state in ['draft','sent']" class="col-xs-2" name="date_quotation">-->
+<!--                        <strong>Quotation Date:</strong>-->
+<!--                        <p t-field="orders.date_order" groups="!report_theming.group_show_date_ordered_date_format"/>-->
+<!--                        <p t-field="orders.date_order" t-options="{'widget': 'date'}" groups="report_theming.group_show_date_ordered_date_format"/>-->
+<!--                    </div>-->
+<!--                    <div t-if="orders.user_id.name" class="col-xs-2" name="sales_person">-->
+<!--                        <strong>Salesperson:</strong>-->
+<!--                        <p t-field="orders.user_id"/>-->
+<!--                    </div>-->
+<!--                    <div t-if="orders.payment_term_id" class="col-xs-2" name="payment_term">-->
+<!--                        <strong>Payment Terms:</strong>-->
+<!--                        <p t-field="orders.payment_term_id"/>-->
+<!--                    </div>-->
+<!--                    <div t-if="orders.validity_date and orders.state in ['draft', 'sent']" class="col-xs-2" name="date_expiration">-->
+<!--                        <strong>Expiration Date:</strong>-->
+<!--                        <p t-field="orders.validity_date" groups="!report_theming.group_show_date_ordered_date_format"/>-->
+<!--                        <p t-field="orders.validity_date" t-options="{'widget': 'date'}" groups="report_theming.group_show_date_ordered_date_format"/>-->
+<!--                    </div>-->
                 </div>
                 <div class="row mt8 mb8">
                     <div class="col-xs-12">
@@ -229,15 +233,18 @@
     </template>
     <template id="mrp_order_planning.mrp_variant">
         <t t-call="web.html_container">
-            <t t-foreach="docs" t-as="o">
-                <t t-call="mrp_order_planning.mrp_variant_qweb"/>
-            </t>
+            <t t-call="mrp_order_planning.mrp_variant_qweb"/>
         </t>
     </template>
-    <report id="action_print_customer_activity_statement"
-        model="res.partner"
+<!--            <t t-foreach="docs" t-as="o">-->
+<!--                <t t-call="mrp_order_planning.mrp_variant_qweb"/>-->
+<!--            </t>-->
+<!--        </t>-->
+<!--    </template>-->
+    <report id="action_mrp_order_planning"
+        model="mrp.production"
         report_type="qweb-pdf"
-        menu="False"
+        menu="True"
         string="Report by variants"
         name="mrp_order_planning.mrp_variant"
         file="mrp_order_planning.mrp_variant"
