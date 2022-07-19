@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="mrp_production_materials_assets_backend"
+              name="mrp_production_materials assets" inherit_id="web.assets_backend">
+        <xpath expr="." position="inside">
+            <link href="/mrp_report_materials/static/src/css/report.less" rel="stylesheet"/>
+            <script type="text/javascript"
+                    src="/mrp_report_materials/static/src/js/mrp_order_materials_report_backend.js"/>
+            <script type="text/javascript"
+                    src="/mrp_report_materials/static/src/js/mrp_order_materials_report_widgets.js"/>
+        </xpath>
+    </template>
+
+</odoo>

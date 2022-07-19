@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<templates>
+    <t t-name="MrpProductionMaterials.buttons">
+        <t t-foreach="buttons" t-as="button">
+            <button type="button" class="btn btn-primary btn-sm" t-att-action="button.action" t-att-data-id="button.data_id" t-att-data-ttype="button.ttype"><t t-esc="button.name"/></button>
+        </t>
+    </t>
+</templates>

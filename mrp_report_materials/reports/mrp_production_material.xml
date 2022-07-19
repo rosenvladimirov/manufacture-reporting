@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <template id="mrp_production_material_document_base">
+        <t t-call="web.internal_layout">
+            <t t-if="o.destination_location_id.partner_id">
+                <t t-set="o" t-value="o.with_context({'lang':o.destination_location_id.partner_id.lang})"/>
+                <t t-set="partner" t-value="o.destination_location_id.partner_id"/>
+            </t>
+            <t t-else="">
+                <t t-set="o" t-value="o.with_context({'lang':o.partner_id.lang})" />
+                <t t-set="partner" t-value="o.partner_id"/>
+            </t>
+            <div class="page">
+                <div class="row">
+                    <div class="o_bulgaria_name">
+                        <div class="col-xs-8 pull-left">
+                            <h4>Manufacture production consumption</h4>
+                        </div>
+                        <div class="col-xs-4 pull-right" name="doctype">
+                            <h4>
+                                <span t-field="o.date"/>
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" name="customer_address">
+                    <div class="col-xs-4 pull-right" style="margin-right: 15px;" id="informations" name="warehouse">
+                        <div>
+                            <span><strong>Warehouse Address:</strong></span>
+                        </div>
+                        <div t-if="o.destination_location_id.partner_id">
+                            <div t-if="o.destination_location_id.partner_id.parent_id" t-field="o.destination_location_id.partner_id.parent_id.name"/>
+                            <div t-field="o.destination_location_id.partner_id.parent_id"
+                               t-options='{"widget": "contact", "fields": ["address", "phone", "mobile"], "no_marker": True}'/>
+                            <div t-if="o.destination_location_id.partner_id" t-field="o.destination_location_id.partner_id.name"/>
+                            <div t-field="o.destination_location_id.partner_id"
+                               t-options='{"widget": "contact", "fields": ["address", "phone", "mobile"], "no_marker": True}'/>
+                        </div>
+                    </div>
+                </div>
+
+                <t t-if="partner">
+                    <t t-call="l10n_bg_extend.dealpartner"/>
+                </t>
+                <div class="row mb8" id="informations" name="informations">
+                    <div t-if="o.origin" class="col-xs-6" name="ref">
+                        <strong>Your Reference:</strong>
+                        <p t-field="o.origin"/>
+                    </div>
+                    <div t-if="o.origin_location_id" class="col-xs-3" name="location">
+                        <strong>Location origin:</strong>
+                        <p t-field="o.origin_location_id"/>
+                    </div>
+                    <div t-if="o.destination_location_id" class="col-xs-3" name="destination">
+                        <strong>Location destination:</strong>
+                        <p t-field="o.destination_location_id"/>
+                    </div>
+                </div>
+                <div class="row mt8 mb8" name="acceptdeliverybody">
+                    <div class="col-xs-12 pb_before pb_after">
+                        <table class="table table-condensed" t-if="o.stock_move_location_line_ids">
+                            <thead>
+                                <tr>
+                                    <th>Nr #</th>
+                                    <th><strong>Product</strong></th>
+                                    <th class="text-center"><strong>Unit measure</strong></th>
+                                    <th class="text-center"><strong>Quantity</strong></th>
+                                    <th class="text-center">Total quantity</th>
+                                    <th class="text-center">Special Transferred quantity</th>
+                                    <th class="text-center">Rest quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.stock_move_location_line_ids" t-as="move_line">
+                                    <tr class="active">
+                                        <td>
+                                            <span t-esc="move_line_index+1"/>
+                                        </td>
+                                        <td name="description">
+                                            <a class="o_mrp_production_materials_action"
+                                                t-att-data-active-id="move_line.product_id.id"
+                                                t-att-data-res-model="'product.product'"
+                                                t-att-style="style">
+                                                <t t-raw="move_line.product_id.display_name"/>
+                                            </a>
+                                            <br/>
+                                            To produce: <span t-field="move_line.product_qty"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="move_line.product_uom"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="move_line.product_uom_qty"/>
+                                            <br/>
+                                            <span t-field="move_line.consumed_product_uom_qty"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="move_line.exclude_product_uom_qty"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="move_line.transfers_quantity"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="move_line.real_product_uom_qty" t-options='{"widget": "float", "precision": 3}'/>
+                                        </td>
+                                    </tr>
+                                    <tr t-if="len(move_line.picking_ids.ids) > 0">
+                                        <td colspan="100">
+                                            <span t-esc="'-'.join([x.name for x in move_line.picking_ids])"/>
+                                        </td>
+                                    </tr>
+                                    <t t-if="move_line.move_ids">
+                                        <tr t-foreach="move_line.move_ids" t-as="raw_move_line">
+                                            <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''">
+                                                <span t-esc="'%s.%s' % (move_line_index+1, raw_move_line_index+1)"/>
+                                            </td>
+                                            <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''">
+                                                <strong><span t-esc="'(%s) %s: %s' % (raw_move_line.raw_material_production_id.state, raw_move_line.raw_material_production_id.display_name, raw_move_line.raw_material_production_id.product_qty)"/></strong>
+                                                <br/>
+                                                <span t-esc="raw_move_line.raw_material_production_id.product_id.display_name"/>
+                                                <br/>
+                                                <span t-esc="raw_move_line.raw_material_production_id.product_id.product_tmpl_id.name"/>
+                                                <t t-if="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0">
+                                                    <br/>
+                                                    <a class="o_mrp_production_materials_action"
+                                                        t-att-data-active-id="raw_move_line.product_id.id"
+                                                        t-att-data-res-model="'product.product'"
+                                                        t-att-style="style">
+                                                        <t t-raw="raw_move_line.product_id.display_name"/>
+                                                    </a>
+                                                </t>
+                                                <br/>
+                                                <span t-esc="raw_move_line.raw_material_production_id.origin"/><t t-if="raw_move_line.raw_material_production_id.analytic_account_id">:<span t-esc="raw_move_line.raw_material_production_id.analytic_account_id.display_name"/></t>
+                                                <br/>
+                                                <a class="o_mrp_production_materials_action"
+                                                    t-att-data-active-id="raw_move_line.raw_material_production_id.bom_id.id"
+                                                    t-att-data-res-model="'mrp.bom'"
+                                                    t-att-style="style">
+                                                    <t t-raw="raw_move_line.raw_material_production_id.bom_id.display_name"/>
+                                                </a>
+                                                <t t-if="raw_move_line.raw_material_production_id.product_id.bom_ids[-1] != raw_move_line.raw_material_production_id.bom_id">
+                                                    <a class="o_mrp_production_materials_action"
+                                                        t-att-data-active-id="raw_move_line.raw_material_production_id.product_id.bom_ids[-1].id"
+                                                        t-att-data-res-model="'mrp.bom'"
+                                                        t-att-style="style">
+                                                        <t t-raw="raw_move_line.raw_material_production_id.product_id.bom_ids[-1].display_name"/>
+                                                    </a>
+                                                </t>
+                                                <br/>
+                                                <span t-esc="raw_move_line.product_uom_qty"/> :: <span t-esc="raw_move_line.raw_material_production_id.product_qty"/>*<span t-field="raw_move_line.unit_factor"/>=<span t-esc="float_round(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom.rounding)" t-options='{"widget": "float", "precision": 3}'/>
+                                            </td>
+                                            <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''" class="text-right">
+                                                <span t-feld="raw_move_line.product_uom"/>
+                                            </td>
+                                            <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''" class="text-right">
+                                                <span t-field="raw_move_line.product_uom_qty"/>
+                                            </td>
+                                            <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''" class="text-right">
+                                                <span t-field="raw_move_line.reserved_availability"/>
+                                            </td>
+                                            <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''" class="text-right">
+                                                <span t-field="raw_move_line.quantity_done"/>
+                                            </td>
+                                            <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''" class="text-right">
+                                                <span t-esc="float_round(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom.rounding)" t-options='{"widget": "float", "precision": 3}'/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+<!--                <t t-call="l10n_bg_extend.approval_signatures" groups="report_theming.group_show_signatures"/>-->
+            </div>
+        </t>
+    </template>
+
+    <template id="mrp_production_material_document">
+        <t t-call="web.internal_layout">
+            <t t-if="o.destination_location_id.partner_id">
+                <t t-set="o" t-value="o.with_context({'lang':o.destination_location_id.partner_id.lang})"/>
+                <t t-set="partner" t-value="o.destination_location_id.partner_id"/>
+            </t>
+            <t t-else="">
+                <t t-set="o" t-value="o.with_context({'lang':o.partner_id.lang})" />
+                <t t-set="partner" t-value="o.partner_id"/>
+            </t>
+            <div class="page">
+                <div class="row">
+                    <div class="o_bulgaria_name">
+                        <div class="col-xs-8 pull-left">
+                            <h4>Manufacture production consumption</h4>
+                        </div>
+                        <div class="col-xs-4 pull-right" name="doctype">
+                            <h4>
+                                <span t-field="o.date"/>
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" name="customer_address">
+                    <div class="col-xs-4 pull-right" style="margin-right: 15px;" id="informations" name="warehouse">
+                        <div>
+                            <span><strong>Warehouse Address:</strong></span>
+                        </div>
+                        <div t-if="o.destination_location_id.partner_id">
+                            <div t-if="o.destination_location_id.partner_id.parent_id" t-field="o.destination_location_id.partner_id.parent_id.name"/>
+                            <div t-field="o.destination_location_id.partner_id.parent_id"
+                               t-options='{"widget": "contact", "fields": ["address", "phone", "mobile"], "no_marker": True}'/>
+                            <div t-if="o.destination_location_id.partner_id" t-field="o.destination_location_id.partner_id.name"/>
+                            <div t-field="o.destination_location_id.partner_id"
+                               t-options='{"widget": "contact", "fields": ["address", "phone", "mobile"], "no_marker": True}'/>
+                        </div>
+                    </div>
+                </div>
+
+                <t t-if="partner">
+                    <t t-call="l10n_bg_extend.dealpartner"/>
+                </t>
+                <div class="row mb8" id="informations" name="informations">
+                    <div t-if="o.origin" class="col-xs-12" name="ref">
+                        <strong>Your Reference:</strong>
+                        <p t-field="o.origin"/>
+                    </div>
+                </div>
+                <div class="row mb8" id="informations" name="informations">
+                    <div t-if="o.origin_location_id" class="col-xs-6" name="location">
+                        <strong>Location origin:</strong>
+                        <p t-field="o.origin_location_id"/>
+                    </div>
+                    <div t-if="o.destination_location_id" class="col-xs-6" name="destination">
+                        <strong>Location destination:</strong>
+                        <p t-field="o.destination_location_id"/>
+                    </div>
+                </div>
+                <div class="row mt8 mb8" name="acceptdeliverybody">
+                    <div class="col-xs-12 pb_before pb_after">
+                        <table class="table table-condensed" t-if="o.stock_move_location_line_ids">
+                            <thead>
+                                <tr>
+                                    <th>Nr #</th>
+                                    <th><strong>Product</strong></th>
+                                    <th><strong>Operation</strong></th>
+                                    <th><strong>Remarks</strong></th>
+                                    <th class="text-center"><strong>Unit measure</strong></th>
+                                    <th class="text-center"><strong>Quantity</strong></th>
+                                    <th class="text-center">Total quantity</th>
+                                    <th class="text-center">Special Transferred quantity</th>
+                                    <th class="text-center">Rest quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.stock_move_location_line_ids" t-as="move_line">
+                                    <tr class="active">
+                                        <td>
+                                            <span t-esc="move_line_index+1"/>
+                                        </td>
+                                        <td name="description">
+                                            <span t-field="move_line.product_id"/>
+                                            <br/>
+                                            To produce: <span t-field="move_line.product_qty"/>
+                                        </td>
+                                        <td/>
+                                        <td/>
+                                        <td class="text-right">
+                                            <span t-field="move_line.product_uom"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="move_line.product_uom_qty"/>
+                                            <br/>
+                                            <span t-field="move_line.consumed_product_uom_qty"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="move_line.exclude_product_uom_qty"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="move_line.transfers_quantity"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="move_line.real_product_uom_qty" t-options='{"widget": "float", "precision": 3}'/>
+                                        </td>
+                                    </tr>
+                                    <tr t-if="len(move_line.picking_ids.ids) > 0">
+                                        <td colspan="100">
+                                            <span t-esc="'-'.join([x.name for x in move_line.picking_ids])"/>
+                                        </td>
+                                    </tr>
+                                    <t t-if="move_line.move_ids">
+                                        <t t-set="production_id" t-value="False"/>
+                                        <t t-set="product_tmpl_id" t-value="False"/>
+                                        <t t-foreach="move_line.move_ids.sorted(lambda r: '%s-%s' % (r.raw_material_production_id.product_tmpl_id.display_name, r.raw_material_production_id.name))" t-as="raw_move_line">
+                                            <tr t-if="product_tmpl_id != raw_move_line.raw_material_production_id.product_tmpl_id" class="active">
+                                                <t t-set="product_tmpl_id" t-value="raw_move_line.raw_material_production_id.product_tmpl_id"/>
+                                                <td colspan="100" class="active">
+                                                    <span t-esc="raw_move_line.raw_material_production_id.product_tmpl_id.display_name"/>
+                                                </td>
+                                            </tr>
+                                            <t t-if="production_id != raw_move_line.raw_material_production_id">
+                                                <t t-set="production_id" t-value="raw_move_line.raw_material_production_id"/>
+                                                <tr>
+                                                    <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''">
+                                                            <span t-esc="'%s.%s' % (move_line_index+1, raw_move_line_index+1)"/>
+                                                    </td>
+                                                    <td colspan="100" t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''">
+                                                        <strong><span t-esc="'(%s) %s: %s' % (raw_move_line.raw_material_production_id.state, raw_move_line.raw_material_production_id.display_name, raw_move_line.raw_material_production_id.product_qty)"/></strong>
+                                                        <br/>
+                                                        <strong><span t-esc="raw_move_line.raw_material_production_id.product_id.display_name"/></strong>
+                                                        <t t-if="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0">
+                                                            <br/>
+                                                            <span t-field="raw_move_line.product_id"/>
+                                                        </t>
+                                                        <br/>
+                                                        <span t-esc="raw_move_line.raw_material_production_id.origin"/><t t-if="raw_move_line.raw_material_production_id.analytic_account_id">:<span t-esc="raw_move_line.raw_material_production_id.analytic_account_id.display_name"/></t>
+                                                        <br/>
+                                                        <span t-esc="raw_move_line.raw_material_production_id.bom_id.display_name"/>
+                                                        <t t-if="raw_move_line.raw_material_production_id.product_id.bom_ids[-1] != raw_move_line.raw_material_production_id.bom_id">
+                                                            - <span t-esc="raw_move_line.raw_material_production_id.product_id.bom_ids[-1].display_name"/>
+                                                        </t>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                            <tr>
+                                                <td style="border-top: 0;"/>
+                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'">
+                                                    <span t-field="raw_move_line.operation_id"/>
+                                                </td>
+                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'">
+                                                    <span t-field="raw_move_line.bom_line_id.description"/>
+                                                </td>
+                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'">
+                                                    <strong><span t-esc="raw_move_line.raw_material_production_id.product_qty"/>*<span t-field="raw_move_line.unit_factor"/>=<span t-esc="float_round(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom.rounding)" t-options='{"widget": "float", "precision": 3}'/>(<span t-esc="raw_move_line.product_uom_qty" t-options='{"widget": "float", "precision": 3}'/>)</strong>
+                                                </td>
+                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'" class="text-right">
+                                                    <strong><span t-feld="raw_move_line.product_uom"/></strong>
+                                                </td>
+                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'" class="text-right">
+                                                    <strong><span t-field="raw_move_line.product_uom_qty"/></strong>
+                                                </td>
+                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'" class="text-right">
+                                                    <strong><span t-field="raw_move_line.reserved_availability"/></strong>
+                                                </td>
+                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'" class="text-right">
+                                                    <strong><span t-field="raw_move_line.quantity_done"/></strong>
+                                                </td>
+                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'" class="text-right">
+                                                    <strong><span t-esc="float_round(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom.rounding)" t-options='{"widget": "float", "precision": 3}'/></strong>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+<!--                <t t-call="l10n_bg_extend.approval_signatures" groups="report_theming.group_show_signatures"/>-->
+            </div>
+        </t>
+    </template>
+    <template id="mrp_report_materials.mrp_consumption">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="mrp_report_materials.mrp_production_material_document" t-lang="o.company_id.lang"/>
+            </t>
+        </t>
+    </template>
+    <report id="action_mrp_order_materials_qweb"
+        model="mrp.production"
+        report_type="qweb-pdf"
+        menu="False"
+        string="Report for consumption"
+        name="mrp_report_materials.mrp_consumption"
+        file="mrp_report_materials.mrp_consumption"
+    />
+    <report id="action_mrp_order_materials"
+        model="mrp.production"
+        report_type="qweb-html"
+        menu="True"
+        string="Report for consumption"
+        name="mrp_report_materials.mrp_consumption"
+        file="mrp_report_materials.mrp_consumption"
+    />
+</odoo>

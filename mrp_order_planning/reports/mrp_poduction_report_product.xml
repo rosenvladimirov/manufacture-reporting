@@ -233,19 +233,21 @@
     </template>
     <template id="mrp_order_planning.mrp_variant">
         <t t-call="web.html_container">
-            <t t-call="mrp_order_planning.mrp_variant_qweb"/>
+            <t t-call="mrp_order_planning.mrp_variant_qweb" t-lang="o.company_id.lang"/>
         </t>
     </template>
-<!--            <t t-foreach="docs" t-as="o">-->
-<!--                <t t-call="mrp_order_planning.mrp_variant_qweb"/>-->
-<!--            </t>-->
-<!--        </t>-->
-<!--    </template>-->
     <report id="action_mrp_order_planning"
         model="mrp.production"
-        report_type="qweb-pdf"
+        report_type="qweb-html"
         menu="True"
-        string="Report by variants"
+        string="Report for consumption"
+        name="mrp_order_planning.mrp_variant"
+        file="mrp_order_planning.mrp_variant"
+    />
+    <report id="action_mrp_order_planning_qweb"
+        model="mrp.production"
+        string="Account Asset"
+        report_type="qweb-pdf"
         name="mrp_order_planning.mrp_variant"
         file="mrp_order_planning.mrp_variant"
     />
