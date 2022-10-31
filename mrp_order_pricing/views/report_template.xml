@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="mrp_order_pricing_assets_backend"
+              name="mrp_order_pricing assets" inherit_id="web.assets_backend">
+        <xpath expr="." position="inside">
+            <link href="/mrp_order_pricing/static/src/css/report.less" rel="stylesheet"/>
+            <script type="text/javascript"
+                    src="/mrp_order_pricing/static/src/js/mrp_order_pricing_report_widgets.js"/>
+            <script type="text/javascript"
+                    src="/mrp_order_pricing/static/src/js/mrp_order_pricing_report_backend.js"/>
+        </xpath>
+    </template>
+
+    <record id="action_mrp_order_pricing_report" model="ir.actions.client">
+        <field name="name">Report for pricing</field>
+        <field name="tag">mrp_production_pricing_backend</field>
+        <field name="context" eval="{'active_model': 'mrp.pricing'}" />
+        <field name="target">main</field>
+    </record>
+
+</odoo>

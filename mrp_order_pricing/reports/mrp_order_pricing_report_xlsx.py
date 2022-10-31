@@ -8,26 +8,15 @@ from odoo.tools import float_round
 _logger = logging.getLogger(__name__)
 
 
-class ReportMrpProductMaterialsXlsx(models.TransientModel):
-    _name = 'report.mp_cm.report_mrp_product_materials_xlsx'
+class ReportMrpProductPricingXlsx(models.TransientModel):
+    _name = 'report.mp_pm.report_mrp_product_pricing_xlsx'
     _inherit = 'report.report_xlsx.abstract'
 
     def _get_objs_for_report(self, docids, data):
-        # active_model = self._context['active_model']
         if data.get('production_ids', False):
             docids = data['production_ids']
-        return self.env['mrp.consumption']. \
-            with_context(dict(self._context, active_model='mrp.production',
-                              active_ids=docids,
-                              sale_order_line_ids=data.get('sale_order_line_ids', False))).create({})
-
-    # def generate_xlsx_report(self, workbook, data, objs):
-    #     # _logger.info("XLS %s:%s::%s" % (data, self._context, objs))
-    #     docids = []
-    #     if data.get('production_ids', False):
-    #         docids = data['production_ids']
-    #     self.env['mrp.consumption'].\
-    #         with_context(dict(self._context, active_model='mrp.production', active_ids=docids)).create({})
+        return self.env['mrp.pricing']. \
+            with_context(dict(self._context, active_model='mrp.production', active_ids=docids)).create({})
 
     def _get_ws_params(self, wb, data, objects):
 
@@ -69,99 +58,72 @@ class ReportMrpProductMaterialsXlsx(models.TransientModel):
                 'width': 10,
                 'format': self.format_tcell_right,
             },
-            '5_exclude_product_uom_qty': {
+            '5_price_unit': {
                 'header': {
-                    'value': 'Total quantity',
+                    'value': 'Unit price',
                 },
                 'data': {
-                    'value': self._render('exclude_product_uom_qty'),
+                    'value': self._render('price_unit'),
                 },
                 'width': 10,
                 'format': self.format_tcell_right,
             },
-            '6_transfers_quantity': {
+            '6_price_subtotal': {
                 'header': {
-                    'value': 'Special Transferred quantity',
+                    'value': 'Subtotal',
                 },
                 'data': {
-                    'value': self._render('transfers_quantity'),
-                },
-                'width': 10,
-                'format': self.format_tcell_right,
-            },
-            '7_real_product_uom_qty': {
-                'header': {
-                    'value': 'Rest quantity',
-                },
-                'data': {
-                    'value': self._render('real_product_uom_qty'),
+                    'value': self._render('price_subtotal'),
                 },
                 'width': 10,
                 'format': self.format_tcell_right,
             },
         }
         l1_mrp_production_materials_template = {
-            '1_dates': {
-                'data': {
-                    'value': self._render('dates'),
-                },
-                'colspan': 7,
-            },
-        }
-        l2_mrp_production_materials_template = {
-            '1_raw_picking': {
-                'data': {
-                    'value': self._render('raw_picking'),
-                },
-                'colspan': 7,
-            },
-        }
-        format_tcell_left = self.format_tcell_left
-        format_tcell_left.set_text_wrap()
-        l3_mrp_production_materials_template = {
             '1_number': {
+                'header': {
+                    'value': '#',
+                },
                 'data': {
                     'value': self._render('n'),
                 },
                 'width': 12,
             },
-            '2_production_id': {
+            '2_product_tmpl_id': {
+                'header': {
+                    'value': 'Product Template',
+                },
                 'data': {
-                    'value': self._render('production_id'),
+                    'value': self._render('product_tmpl_id'),
                 },
                 'width': 36,
-                'format': format_tcell_left,
             },
-            '3_product_uom': {
-                'data': {
-                    'value': self._render('product_uom'),
+            '4_product_qty': {
+                'header': {
+                    'value': 'Quantity',
                 },
-                'width': 10,
-            },
-            '4_product_uom_qty': {
                 'data': {
-                    'value': self._render('product_uom_qty'),
+                    'value': self._render('product_qty'),
                 },
                 'width': 10,
                 'format': self.format_tcell_right,
             },
-            '5_reserved_availability': {
+            '5_price_unit_tmpl': {
+                'header': {
+                    'value': 'Price unit',
+                },
                 'data': {
-                    'value': self._render('reserved_availability'),
+                    'value': self._render('price_unit_tmpl'),
                 },
                 'width': 10,
                 'format': self.format_tcell_right,
             },
-            '6_quantity_done': {
-                'data': {
-                    'value': self._render('quantity_done'),
+            '6_price_tmpl_subtotal': {
+                'header': {
+                    'value': 'Subtotal',
                 },
-                'width': 10,
-                'format': self.format_tcell_right,
-            },
-            '7_initial': {
                 'data': {
-                    'value': self._render('initial'),
+                    'value': self._render('price_tmpl_subtotal'),
                 },
                 'width': 10,
                 'format': self.format_tcell_right,
@@ -178,14 +140,6 @@ class ReportMrpProductMaterialsXlsx(models.TransientModel):
                 'wanted_list': [k for k in sorted(
                     l1_mrp_production_materials_template.keys())],
                 'col_specs': l1_mrp_production_materials_template
-            }, {
-                'wanted_list': [k for k in sorted(
-                    l2_mrp_production_materials_template.keys())],
-                'col_specs': l2_mrp_production_materials_template
-            }, {
-                'wanted_list': [k for k in sorted(
-                    l3_mrp_production_materials_template.keys())],
-                'col_specs': l3_mrp_production_materials_template
             },
             ],
         }
@@ -230,9 +184,8 @@ class ReportMrpProductMaterialsXlsx(models.TransientModel):
                         'material_name': line.product_id.display_name or '',
                         'product_uom': line.product_uom.display_name or '',
                         'product_uom_qty': line.product_uom_qty or 0.00,
-                        'exclude_product_uom_qty': line.exclude_product_uom_qty or 0.00,
-                        'transfers_quantity': line.transfers_quantity or 0.00,
-                        'real_product_uom_qty': line.real_product_uom_qty or 0.00,
+                        'price_unit': line.price_unit or 0.00,
+
                     },
                     default_format=self.format_tcell_left)
                 if line.move_ids:

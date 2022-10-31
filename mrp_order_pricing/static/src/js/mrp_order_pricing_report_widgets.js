@@ -1,4 +1,4 @@
-odoo.define('mrp_order_materials.mrp_production_materials_report_widget', function
+odoo.define('mrp_order_pricing.mrp_order_pricing_report_widget', function
 (require) {
 'use strict';
 
@@ -6,10 +6,10 @@ var Widget = require('web.Widget');
 
 return Widget.extend({
     events: {
-        'click .o_mrp_production_materials_action': 'boundLink',
-        'click .o_mrp_production_materials_action_multi': 'boundLinkmulti',
-        'click .o_mrp_production_materials_action_monetary': 'boundLinkMonetary',
-        'click .o_mrp_production_materials_action_monetary_multi': 'boundLinkMonetarymulti',
+        'click .o_mrp_order_pricing_action': 'boundLink',
+        'click .o_mrp_order_pricing_action_multi': 'boundLinkmulti',
+        'click .o_mrp_order_pricing_action_monetary': 'boundLinkMonetary',
+        'click .o_mrp_order_pricing_action_monetary_multi': 'boundLinkMonetarymulti',
     },
     init: function () {
         this._super.apply(this, arguments);

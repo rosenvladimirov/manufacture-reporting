@@ -1,4 +1,4 @@
-odoo.define('mrp_order_materials.mrp_production_consumption_backend', function (require) {
+odoo.define('mrp_order_pricing.mrp_order_pricing_backend', function (require) {
 'use strict';
 
 var core = require('web.core');
@@ -7,7 +7,7 @@ var ControlPanelMixin = require('web.ControlPanelMixin');
 var ReportWidget = require('mrp_order_materials.mrp_production_materials_report_widget');
 var QWeb = core.qweb;
 
-var MrpProductionConsumptionBackend = Widget.extend(ControlPanelMixin, {
+var MrpProductionPricingBackend = Widget.extend(ControlPanelMixin, {
     // Stores all the parameters of the action.
     init: function(parent, action) {
         this.actionManager = parent;
@@ -22,7 +22,7 @@ var MrpProductionConsumptionBackend = Widget.extend(ControlPanelMixin, {
         this.given_context.active_ids = action.context.active_ids || action.params.active_ids;
         this.given_context.model = action.context.active_model || false;
         this.given_context.ttype = action.context.ttype || false;
-        console.log('INIT', action, this.odoo_context, this.given_context, 'TR', this.actionManager.get_breadcrumbs());
+        // console.log('INIT', action, this.odoo_context, this.given_context, 'TR', this.actionManager.get_breadcrumbs());
         return this._super.apply(this, arguments);
     },
     willStart: function() {
@@ -98,7 +98,7 @@ var MrpProductionConsumptionBackend = Widget.extend(ControlPanelMixin, {
     },
     renderButtons: function(buttons) {
         var self = this;
-        this.$buttons = $(QWeb.render("MrpProductionMaterials.buttons", {buttons: this.buttons}));
+        this.$buttons = $(QWeb.render("MrpProductionPricing.buttons", {buttons: this.buttons}));
 
         // bind actions
         _.each(this.$buttons.siblings('button'), function(el) {
@@ -145,6 +145,6 @@ var MrpProductionConsumptionBackend = Widget.extend(ControlPanelMixin, {
     },
 });
 
-core.action_registry.add("mrp_production_consumption_backend", MrpProductionConsumptionBackend);
-return MrpProductionConsumptionBackend;
+core.action_registry.add("mrp_production_pricing_backend", MrpProductionPricingBackend);
+return MrpProductionPricingBackend;
 });

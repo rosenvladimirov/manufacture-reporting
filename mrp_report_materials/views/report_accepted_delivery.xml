@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <template id="accepted_delivery_report_document_mrp" inherit_id="report_theming.accepted_delivery_report_document">
+        <xpath expr="//div[hasclass('page')]" position="before">
+            <t t-set="consumption" t-value="o.get_material_consumption()"/>
+            <t t-set="consumption_lines" t-value="consumption.stock_move_location_line_ids"/>
+        </xpath>
+        <xpath expr="//td[@t-if='o.origin']" position="inside">
+            <br t-if="consumption"/>
+            <span t-if="consumption" t-esc="sum([x.product_qty for x in consumption.production_ids])"/>
+        </xpath>
+        <xpath expr="//th[@name='lot_serial']" position="after">
+            <t t-if="consumption_lines">
+                <th class="text-center"><strong>Unit factor</strong></th>
+                <th class="text-center"><strong>Initial Quantity</strong></th>
+            </t>
+        </xpath>
+        <xpath expr="//th[@name='um']" position="after">
+            <t t-if="consumption_lines">
+                <th class="text-center"><strong>Rest Quantity</strong></th>
+            </t>
+        </xpath>
+
+        <xpath expr="//td[@name='quantity']" position="before">
+            <t t-if="consumption_line">
+                <t t-set="consumption_line" t-value="consumption_lines.filtered(lambda r: r.product_id == move_line.product_id)"/>
+                <td class="text-right">
+                    <span t-field="consumption_line.unit_factor"/>
+                </td>
+                <td class="text-right">
+                    <span t-field="consumption_line.product_uom_qty"/>
+                </td>
+            </t>
+            <t t-else="">
+                <td t-if="consumption_lines"/>
+                <td t-if="consumption_lines"/>
+            </t>
+        </xpath>
+        <xpath expr="//td[@name='unit']" position="after">
+            <t t-if="consumption_line">
+                <t t-set="consumption_line" t-value="consumption_lines.filtered(lambda r: r.product_id == move_line.product_id)"/>
+                <td class="text-right">
+                    <span t-field="consumption_line.real_product_uom_qty"/>
+                </td>
+            </t>
+            <t t-else="">
+                <td t-if="consumption_lines"/>
+            </t>
+        </xpath>
+    </template>
+</odoo>

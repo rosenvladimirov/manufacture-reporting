@@ -1,11 +1,3 @@
-.o_form_view {
-    .o_field_pdfviewer {
-        width: 100%;
-        height: 1050px;
-        border: 0;
-        margin-top: 10px;
-    }
-}
 page[size="A4"] {
 	background: white;
 	width: 21cm;
@@ -23,6 +15,20 @@ page[size="A4_landscape"] {
 	margin: 0 auto;
 	margin-bottom: 0.5cm;
 	box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
+}
+.o_report_name {
+    height: 16px;
+    color: @component-active-color;
+    > h4 {
+    color: @component-active-color;
+    text-transform: uppercase;
+    }
+}
+.o_mrp_production_variant_mgmt_web_action {
+    cursor: pointer;
+}
+.o_mrp_production_variant_mgmt_web_action_multi {
+    cursor: pointer;
 }
 .report-table {
     table {

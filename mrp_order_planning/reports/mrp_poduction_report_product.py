@@ -8,58 +8,75 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-class MrpProductReportProductAbstract(models.AbstractModel):
-    _name = 'report.mrp_order_planning.mrp_variant'
-    # _description = 'Sale order report variants abstract'
+class MrpReportPlanningProductAbstract(models.TransientModel):
+    _name = 'mrp.planning'
+    _description = 'Manufacture variant planning report abstract'
+
+    origin_location_id = fields.Many2one(
+        string='Origin Location',
+        comodel_name='stock.location',
+        required=True,
+    )
+    destination_location_id = fields.Many2one(
+        string='Destination Location',
+        comodel_name='stock.location',
+        required=True,
+    )
+    partner_id = fields.Many2one(
+        comodel_name='res.partner',
+        string='Destination Address',
+    )
+    company_id = fields.Many2one(
+        comodel_name='res.company',
+        string='Company',
+        default=lambda self: self.env['res.company']._company_default_get('stock.picking'),
+    )
+    name = fields.Char(
+        string='Reference',
+        default='/',
+    )
+    origin = fields.Char(
+        string='Source Document',
+    )
+    date = fields.Date(
+        string='Date',
+        default=fields.Datetime.now,
+    )
+    production_ids = fields.Many2many(
+        comodel_name='mrp.production',
+        string='Productions',
+    )
 
     @api.model
-    def get_report_values(self, docids, data=None):
-        order_id = False
-        if data:
-            order_id = data.get('order_id')
-        if not order_id:
-            order_id = self._context.get('order_id')
-        if not order_id:
-            order_id = docids
-        # _logger.info("ORDER get_report_values order_id=>%s\n:_context=>%s\n::data=>%s\n::docids=>%s" % (
-        #     order_id, self._context, data, docids))
+    def default_get(self, fields_list):
+        res = super(MrpReportPlanningProductAbstract, self).default_get(fields_list)
+        production_ids = res.get('production_ids', False) and res['production_ids'][0][2]
+        if not production_ids:
+            production_ids = self._context.get('production_ids')
+        productions = self.env['mrp.production'].browse(production_ids)
+        res['production_ids'] = [(6, False, productions.ids)]
+        res['origin'] = '-'.join([x.name for x in productions])
+        warehouse = self.env['stock.warehouse'].search([('company_id', '=', self.env.user.company_id.id)], limit=1)
+        manufacture_route = self.env.ref('mrp.route_warehouse0_manufacture', raise_if_not_found=False)
+        if warehouse:
+            res['origin_location_id'] = warehouse.lot_stock_id.id
+        if not res.get('destination_location_id'):
+            res['destination_location_id'] = productions[0].location_dest_id.id
+        res['partner_id'] = productions[0].location_dest_id.partner_id \
+                            and productions[0].location_dest_id.partner_id.id or False
+        return res
 
-        if not order_id:
-            return {
-                'doc_ids': docids,
-                'doc_model': 'mrp.production',
-                'env': self.env,
-                'context_timestamp': lambda t: fields.Datetime.context_timestamp(self.with_context(tz=self.env.user.tz),
-                                                                                 t),
-            }
-        docs = self.env['mrp.production'].browse(order_id)
-        doc, headers, sub_headers, footer, pages = self.env['mrp.production.report.product'].get_cross_table(docs)
-        # _logger.info("RESULT %s::%s" % (docids, data))
-        return {
-            'doc_ids': docs.ids,
-            'doc_model': 'mrp.production',
-            'docs': docs,
-            'data': data,
-            'variants': doc,
-            'headers': headers,
-            'sub_headers': sub_headers,
-            'count_sub_headers': len(sub_headers) + 1,
-            'footers': footer,
-            'pages': pages,
-            'orders': docs,
-            'env': self.env,
-            'print_pdf': True,
-        }
-
-    def get_html(self):
+    def get_html(self, given_context=None):
         context = dict(self._context)
-        order_ids = self._context.get('active_ids')
-        docs = self.env['mrp.production'].browse(order_ids)
+        if given_context is None:
+            given_context = context
+        production_ids = given_context.get('production_ids')
+        docs = self.env['mrp.production'].browse(production_ids)
         doc, headers, sub_headers, footer, pages = self.env['mrp.production.report.product'].get_cross_table(docs)
         rcontext = {
-            'doc_ids': docs.ids,
+            'doc_ids': self.ids,
             'doc_model': 'mrp.production',
-            'docs': docs,
+            'docs': self,
             'variants': doc,
             'headers': headers,
             'sub_headers': sub_headers,
@@ -71,36 +88,86 @@ class MrpProductReportProductAbstract(models.AbstractModel):
             'print_pdf': False,
             'context_timestamp': lambda t: fields.Datetime.context_timestamp(self.with_context(tz=self.env.user.tz), t),
         }
-        result = {}
-        result['html'] = self.env.ref('mrp_order_planning.report_mrp_variant_html').with_context(context).\
-            render(rcontext)
+        result = {
+            'html': self.env.ref('mrp_order_planning.report_mrp_variant_base').with_context(context).render(rcontext)
+        }
         # _logger.info("ORDER get_html %s\n:%s\n%s\n%s" % (order_id, self._context, rcontext, result))
         return result
 
     @api.multi
-    def print_report(self, report_type='qweb-pdf', report_sub_type=False):
+    def print_report(self, report_type='qweb-pdf', given_context=None):
         # self.ensure_one()
         context = dict(self.env.context)
+        if given_context is None:
+            given_context = context
         # _logger.info('PRINT REPORT %s:%s:%s' % (context, report_type, report_sub_type))
         if report_type == 'xlsx':
             # order_id = self._context.get('order_id')
             # docs = self.env['sale.order'].browse(order_id)
-            action = self.env.ref('mrp_order_planning.action_stock_inventory_valuation_report_xlsx')
-            return action.with_context(context).report_action(self, data={'order_id': self._context.get('active_ids')})
-        else:
-            action = self.env.ref('mrp_order_planning.action_report_report_sale_order_product_qweb')
+            action = self.env.ref('mrp_order_planning.action_mrp_order_planning_report_xlsx')
             return action.with_context(context).report_action(self, data={
-                'ids': self.ids,
-                'model': self._table,
+                'production_ids': given_context.get('active_ids')
+            })
+        else:
+            action = self.env.ref('mrp_order_planning.action_mrp_order_planning_qweb')
+            return action.with_context(context).report_action(self, data={
                 'print_pdf': True,
+                'production_ids': given_context.get('active_ids'),
             })
 
     def get_buttons(self, given_context=None):
-        # _logger.info("GET BUTTONS %s-%s" % (self, given_context))
         retr = []
         retr.append({'name': _('Print'), 'action': 'print_report', 'data_id': False, 'ttype': 'qweb-pdf'})
         retr.append({'name': _('Export'), 'action': 'print_report', 'data_id': False, 'ttype': 'xlsx'})
         return retr
+
+
+class MrpProductReportProductAbstract(models.AbstractModel):
+    _name = 'report.mrp_order_planning.mrp_variant'
+
+    # _description = 'Sale order report variants abstract'
+
+    @api.model
+    def get_report_values(self, docids, data=None):
+        production_ids = False
+        if data:
+            production_ids = data.get('production_ids')
+        if not production_ids:
+            production_ids = self._context.get('production_ids')
+        if not production_ids:
+            production_ids = docids
+        _logger.info("ORDER get_report_values order_id=>%s\n:_context=>%s\n::data=>%s\n::docids=>%s" % (
+            production_ids, self._context, data, docids))
+
+        if not production_ids:
+            return {
+                'doc_ids': docids,
+                'doc_model': 'mrp.production',
+                'env': self.env,
+                'context_timestamp': lambda t: fields.Datetime.context_timestamp(self.with_context(tz=self.env.user.tz),
+                                                                                 t),
+            }
+        report = self.env[self._context['active_model']].browse(self._context['active_id'])
+        # docs = self.env['mrp.production'].browse(production_ids)
+        # _logger.info("DOCS %s:%s" % (docs, report and report.production_ids))
+        doc, headers, sub_headers, footer, pages = self.env['mrp.production.report.product'].\
+            get_cross_table(report.production_ids)
+        # _logger.info("RESULT %s::%s" % (docids, data))
+        return {
+            'doc_ids': report.ids,
+            'doc_model': 'mrp.production',
+            'docs': report,
+            'data': data,
+            'variants': doc,
+            'headers': headers,
+            'sub_headers': sub_headers,
+            'count_sub_headers': len(sub_headers) + 1,
+            'footers': footer,
+            'pages': pages,
+            'orders': report.production_ids,
+            'env': self.env,
+            'print_pdf': True,
+        }
 
 
 class MrpProductionReportProduct(models.AbstractModel):
@@ -196,8 +263,11 @@ ORDER BY 2,3$$, $$VALUES %s$$""" % ",".join(["('%s')" % x.name for x in values])
 
             for row in rows:
                 if set(line['product_id'].attribute_value_ids.ids) & set([row.id]):
-                    other = line['key'].split(';')[-1]
-                    other = other.split('+')[1]
+                    if len(line['key'].split(';')) > 2:
+                        other = line['key'].split(';')[-1]
+                        other = other.split('+')[1]
+                    else:
+                        other = 'none'
                     # _logger.info("KEY: %s & %s = %s" % (line['product_id'].attribute_value_ids.ids, [row.id], line_new))
                     if not res[0].get(line['product_id'].product_tmpl_id):
                         res[0][line['product_id'].product_tmpl_id] = {}
@@ -276,4 +346,4 @@ LEFT JOIN product_attribute_line AS pl
         # self._table = sale_report_product
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute("""CREATE or REPLACE VIEW %s as (%s FROM %s)""" % (
-            self._table, self._select(), self._from(), ))
+            self._table, self._select(), self._from(),))

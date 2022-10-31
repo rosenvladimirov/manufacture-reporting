@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_wiz_mrp_report_materials" model="ir.ui.view">
+        <field name="name">wiz.mrp.report.materials.form</field>
+        <field name="model">wiz.mrp.report.materials</field>
+        <field name="arch" type="xml">
+            <form>
+            <sheet>
+                <p>
+                    This reference contains information about the materials used in the production.
+                </p>
+                <group>
+                    <field name="report_small" groups="mrp.group_mrp_user"/>
+                    <field name="report_no_detail" groups="mrp.group_mrp_user"/>
+                    <field name="wait_only"/>
+                    <field name="production_ids" widget="many2many_tags" invisible="1"/>
+                    <field name="sale_order_line_ids" widget="many2many_tags" invisible="1"/>
+                </group>
+                <footer>
+                    <button name="action_reports" string="Go" type="object" class="btn-primary"/>
+                    <button special="cancel" string="Cancel" class="btn-default"/>
+                </footer>
+            </sheet>
+            </form>
+        </field>
+    </record>
+
+   <act_window name="Report material consumption"
+        res_model="wiz.mrp.report.materials"
+        src_model="mrp.production"
+        view_mode="form"
+        target="new"
+        key2="client_action_multi"
+        id="wiz_mrp_report_materials_action"
+        view_id="view_wiz_mrp_report_materials"/>
+
+   <act_window name="Report material consumption"
+        res_model="wiz.mrp.report.materials"
+        src_model="stock.picking"
+        view_mode="form"
+        target="new"
+        key2="client_action_multi"
+        id="wiz_stock_mrp_report_materials_action"
+        view_id="view_wiz_mrp_report_materials"/>
+
+   <act_window name="Report material consumption"
+        res_model="wiz.mrp.report.materials"
+        src_model="sale.order"
+        view_mode="form"
+        target="new"
+        key2="client_action_multi"
+        id="wiz_sale_mrp_report_materials_action"
+        view_id="view_wiz_mrp_report_materials"/>
+</odoo>

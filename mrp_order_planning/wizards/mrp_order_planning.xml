@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_wiz_mrp_report_planing" model="ir.ui.view">
+        <field name="name">wiz.mrp.report.planing.form</field>
+        <field name="model">wiz.mrp.report.planing</field>
+        <field name="arch" type="xml">
+            <form>
+            <sheet>
+                <p>
+                    This reference contains information about the materials used in the production.
+                </p>
+                <footer>
+                    <button name="action_reports" string="Go" type="object" class="btn-primary"/>
+                    <button special="cancel" string="Cancel" class="btn-default"/>
+                </footer>
+            </sheet>
+            </form>
+        </field>
+    </record>
+
+   <act_window name="Report for planing by variants"
+        res_model="wiz.mrp.report.planing"
+        src_model="mrp.production"
+        view_mode="form"
+        target="new"
+        key2="client_action_multi"
+        id="wiz_mrp_report_planing_action"
+        view_id="view_wiz_mrp_report_planing"/>
+
+</odoo>

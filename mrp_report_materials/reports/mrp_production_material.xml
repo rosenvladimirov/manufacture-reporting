@@ -1,34 +1,45 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
+    <template id="html_report_container">
+        <div class="o_form_view o_form_readonly">
+            <div class="o_form_sheet_bg">
+                <div class="o_form_sheet">
+                    <t t-raw="0"/>
+                </div>
+            </div>
+        </div>
+    </template>
     <template id="mrp_production_material_document_base">
-        <t t-call="web.internal_layout">
-            <t t-if="o.destination_location_id.partner_id">
-                <t t-set="o" t-value="o.with_context({'lang':o.destination_location_id.partner_id.lang})"/>
-                <t t-set="partner" t-value="o.destination_location_id.partner_id"/>
+        <t t-call="mrp_report_materials.html_report_container">
+            <t t-if="o.destination_location_id.out_partner_id">
+<!--                <t t-set="o" t-value="o.with_context({'lang':o.destination_location_id.partner_id.lang})"/>-->
+                <t t-set="partner" t-value="o.destination_location_id.out_partner_id"/>
+<!--                <t t-set="not_print_barcode" t-value="parser != o.company_id.partner_id"/>-->
             </t>
             <t t-else="">
-                <t t-set="o" t-value="o.with_context({'lang':o.partner_id.lang})" />
+<!--                <t t-set="o" t-value="o.with_context({'lang':o.partner_id.lang})" />-->
                 <t t-set="partner" t-value="o.partner_id"/>
+<!--                <t t-set="not_print_barcode" t-value="parser != o.company_id.partner_id"/>-->
             </t>
             <div class="page">
-                <div class="row">
-                    <div class="o_bulgaria_name">
-                        <div class="col-xs-8 pull-left">
-                            <h4>Manufacture production consumption</h4>
-                        </div>
-                        <div class="col-xs-4 pull-right" name="doctype">
-                            <h4>
-                                <span t-field="o.date"/>
-                            </h4>
-                        </div>
-                    </div>
-                </div>
-                <div class="row" name="customer_address">
-                    <div class="col-xs-4 pull-right" style="margin-right: 15px;" id="informations" name="warehouse">
+<!--                <div class="row">-->
+<!--                    <div class="o_report_name">-->
+<!--                        <div class="col-xs-8 pull-left">-->
+<!--                            <h4>Manufacture production consumption</h4>-->
+<!--                        </div>-->
+<!--                        <div class="col-xs-4 pull-right" name="doctype">-->
+<!--                            <h4>-->
+<!--                                <span t-field="o.date"/>-->
+<!--                            </h4>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+                <div class="row" name="customer_address" t-if="o.destination_location_id.partner_id">
+                    <div class="col-xs-12 pull-right" style="margin-right: 15px;" id="informations" name="warehouse">
                         <div>
                             <span><strong>Warehouse Address:</strong></span>
                         </div>
-                        <div t-if="o.destination_location_id.partner_id">
+                        <div>
                             <div t-if="o.destination_location_id.partner_id.parent_id" t-field="o.destination_location_id.partner_id.parent_id.name"/>
                             <div t-field="o.destination_location_id.partner_id.parent_id"
                                t-options='{"widget": "contact", "fields": ["address", "phone", "mobile"], "no_marker": True}'/>
@@ -39,13 +50,27 @@
                     </div>
                 </div>
 
-                <t t-if="partner">
-                    <t t-call="l10n_bg_extend.dealpartner"/>
-                </t>
+<!--                <t t-if="partner">-->
+<!--                    <t t-call="l10n_bg_extend.dealpartner"/>-->
+<!--                </t>-->
                 <div class="row mb8" id="informations" name="informations">
                     <div t-if="o.origin" class="col-xs-6" name="ref">
                         <strong>Your Reference:</strong>
-                        <p t-field="o.origin"/>
+                        <p>
+                            <ul class="list-inline" t-if="o.production_ids">
+                                <t t-foreach="o.production_ids" t-as="raw_production">
+                                    <li>
+                                        <a class="o_mrp_production_materials_action"
+                                            t-att-data-active-id="raw_production.id"
+                                            t-att-data-res-model="'mrp.production'"
+                                            t-att-style="style">
+                                            <t t-raw="raw_production.display_name"/>
+                                        </a>
+                                    </li>
+                                </t>
+                            </ul>
+                        </p>
+<!--                        <p t-field="o.origin"/>-->
                     </div>
                     <div t-if="o.origin_location_id" class="col-xs-3" name="location">
                         <strong>Location origin:</strong>
@@ -53,30 +78,45 @@
                     </div>
                     <div t-if="o.destination_location_id" class="col-xs-3" name="destination">
                         <strong>Location destination:</strong>
-                        <p t-field="o.destination_location_id"/>
+                        <p>
+                            <a class="o_mrp_production_materials_action"
+                                t-att-data-active-id="o.destination_location_id.id"
+                                t-att-data-res-model="'stock.location'"
+                                t-att-style="style">
+                                <t t-raw="o.destination_location_id.display_name"/>
+                            </a>
+                        </p>
                     </div>
                 </div>
                 <div class="row mt8 mb8" name="acceptdeliverybody">
-                    <div class="col-xs-12 pb_before pb_after">
+                    <div class="col-xs-12">
                         <table class="table table-condensed" t-if="o.stock_move_location_line_ids">
                             <thead>
                                 <tr>
-                                    <th>Nr #</th>
-                                    <th><strong>Product</strong></th>
-                                    <th class="text-center"><strong>Unit measure</strong></th>
-                                    <th class="text-center"><strong>Quantity</strong></th>
-                                    <th class="text-center">Total quantity</th>
-                                    <th class="text-center">Special Transferred quantity</th>
-                                    <th class="text-center">Rest quantity</th>
+                                    <th class="text-center" style="width: 5%;">Nr #</th>
+                                    <th class="text-left" style="width: 45%;"><strong>Product</strong></th>
+                                    <th class="text-left" style="width: 10%;"><strong>Unit measure</strong></th>
+                                    <th class="text-center" style="width: 10%;"><strong>Quantity</strong></th>
+                                    <th class="text-center" style="width: 10%;">Total quantity</th>
+                                    <th class="text-center" style="width: 10%;">Special Transferred quantity</th>
+                                    <th class="text-center" style="width: 10%;">Rest quantity</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-foreach="o.stock_move_location_line_ids" t-as="move_line">
+                                <t t-if="o.wait_only">
+                                    <t t-set="stock_move_location_line_ids" t-value="o.stock_move_location_line_ids.filtered(lambda r: r.real_product_uom_qty > 0)"/>
+                                </t>
+                                <t t-else="">
+                                    <t t-set="stock_move_location_line_ids" t-value="o.stock_move_location_line_ids"/>
+                                </t>
+                                <t t-foreach="stock_move_location_line_ids.sorted(lambda r: r.sequence)" t-as="move_line">
                                     <tr class="active">
-                                        <td>
-                                            <span t-esc="move_line_index+1"/>
+                                        <td style="width: 5%;">
+                                            <span t-esc="'%s.%s' % (move_line.sequence, move_line_index+1)"/>
+                                            <br/>
+                                            <span t-field="move_line.product_type_id"/>
                                         </td>
-                                        <td name="description">
+                                        <td style="width: 15%;">
                                             <a class="o_mrp_production_materials_action"
                                                 t-att-data-active-id="move_line.product_id.id"
                                                 t-att-data-res-model="'product.product'"
@@ -86,36 +126,180 @@
                                             <br/>
                                             To produce: <span t-field="move_line.product_qty"/>
                                         </td>
-                                        <td class="text-right">
+                                        <td class="text-left" style="width: 10%;">
                                             <span t-field="move_line.product_uom"/>
+                                            <br/>
+                                            <span t-field="move_line.unit_factor"/>
                                         </td>
-                                        <td class="text-right">
+                                        <td class="text-right" style="width: 10%;">
                                             <span t-field="move_line.product_uom_qty"/>
                                             <br/>
                                             <span t-field="move_line.consumed_product_uom_qty"/>
                                         </td>
-                                        <td class="text-right">
+                                        <td class="text-right" style="width: 10%;">
                                             <span t-field="move_line.exclude_product_uom_qty"/>
                                         </td>
-                                        <td class="text-right">
+                                        <td class="text-right" style="width: 10%;">
                                             <span t-field="move_line.transfers_quantity"/>
                                         </td>
-                                        <td class="text-right">
+                                        <td class="text-right" style="width: 10%;">
                                             <span t-field="move_line.real_product_uom_qty" t-options='{"widget": "float", "precision": 3}'/>
                                         </td>
                                     </tr>
-                                    <tr t-if="len(move_line.picking_ids.ids) > 0">
-                                        <td colspan="100">
-                                            <span t-esc="'-'.join([x.name for x in move_line.picking_ids])"/>
-                                        </td>
-                                    </tr>
                                     <t t-if="move_line.move_ids">
-                                        <tr t-foreach="move_line.move_ids" t-as="raw_move_line">
+<!--                                        For future to remove this is incorrect -->
+                                        <t t-set="dates" t-value="{}"/>
+                                        <t t-foreach="move_line.move_ids.filtered(lambda r: r.raw_material_production_id)" t-as="raw_move_line">
+                                            <t t-foreach="raw_move_line.raw_material_production_id.sale_line_ids" t-as="raw_sale_order_line">
+                                                <t t-foreach="raw_sale_order_line.requested_date_ids" t-as="requested_date">
+                                                    <t t-if="not dates.get(requested_date.date_confirmed, False)">
+                                                        <t t-esc="dates.update({requested_date.date_confirmed: [raw_sale_order_line.product_uom_qty, requested_date.id]})"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <t t-esc="dates.update({requested_date.date_confirmed: [dates[requested_date.date_confirmed][0]+raw_sale_order_line.product_uom_qty, requested_date.id]})"/>
+                                                    </t>
+                                                </t>
+                                            </t>
+                                        </t>
+                                        <tr t-if="dates">
+                                            <td style="width: 5%;"/>
+                                            <td colspan="100">
+                                                <ul class="list-inline" >
+                                                    <t t-foreach="dates.items()" t-as="requested_date">
+                                                        <li>
+                                                            <a class="o_mrp_production_variant_mgmt_web_action"
+                                                                t-att-data-active-id="requested_date[1][1]"
+                                                                t-att-data-res-model="'sale.order.line.dates'"
+                                                                t-att-style="style">
+                                                                <t t-raw="'[%s => %s*%s=%s]' % (requested_date[0], requested_date[1][0], move_line.unit_factor, float_round(move_line.unit_factor*requested_date[1][0], move_line.product_id.product_tmpl_id.uom_id.rounding))"/>
+                                                            </a>
+                                                        </li>
+                                                    </t>
+                                                </ul>
+<!--                                                <span t-esc="'%s' % dates and ' '.join(['[%s => %s]' % (v, k) for k, v in dates.items()]) or ''"/>-->
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="len(move_line.picking_ids.ids) > 0">
+                                        <t t-if="move_line.move_ids">
+                                            <t t-foreach="move_line.picking_ids" t-as="raw_picking">
+                                                <t t-foreach="raw_picking.move_lines.filtered(lambda r: r.product_id == move_line.product_id)" t-as="raw_move">
+                                                    <tr t-foreach="raw_move.move_line_ids.filtered(lambda r: r.qty_done != 0.0)" t-as="raw_move_line">
+                                                        <t t-set="domain" t-value="[('id', 'in', raw_move.move_line_ids.ids)]"/>
+                                                        <td style="border-top: 0; width: 5%;"/>
+                                                        <td style="border-top: 0; width: 15%;">
+                                                            <a class="o_mrp_production_materials_action_multi"
+                                                                t-att-data-domain="domain"
+                                                                t-att-data-res-model="'stock.move.line'"
+                                                                t-att-style="style">
+                                                                <t t-raw="'[%s]%s%s' % (raw_move_line.picking_id.display_name, raw_move_line.lot_id and '-(%s)-' % raw_move_line.lot_id.name or '', raw_move_line.display_name)"/>
+                                                            </a>
+                                                        </td>
+                                                        <td class="text-left" style="border-top: 0; width: 10%;">
+                                                            <span t-field="raw_move_line.product_uom_id"/>
+                                                        </td>
+                                                        <td class="text-right" style="border-top: 0; width: 10%;">
+                                                            <span t-field="raw_move_line.ordered_qty"/>
+                                                        </td>
+                                                        <td class="text-right" style="border-top: 0; width: 10%;"/>
+                                                        <td class="text-right" style="border-top: 0; width: 10%;">
+                                                            <span t-field="raw_move_line.qty_done"/>
+                                                        </td>
+                                                        <td class="text-right" style="border-top: 0; width: 10%;"/>
+                                                    </tr>
+                                                </t>
+                                            </t>
+<!--                                            <td colspan="3">-->
+<!--                                                <ul class="list-inline" t-if="move_line.picking_ids">-->
+<!--                                                    <t t-foreach="move_line.picking_ids" t-as="raw_picking">-->
+<!--                                                        <li>-->
+<!--                                                            <a class="o_mrp_production_materials_action"-->
+<!--                                                                t-att-data-active-id="raw_picking.id"-->
+<!--                                                                t-att-data-res-model="'stock.picking'"-->
+<!--                                                                t-att-style="style">-->
+<!--                                                                <t t-raw="raw_picking.display_name"/>-->
+<!--                                                            </a>-->
+<!--                                                        </li>-->
+<!--                                                    </t>-->
+<!--                                                </ul>-->
+<!--                                            </td>-->
+<!--                                            <td colspan="4">-->
+<!--                                                <ul class="list-inline">-->
+<!--                                                    <t t-foreach="move_line.picking_ids" t-as="raw_picking">-->
+<!--                                                        <t t-foreach="raw_picking.move_lines.filtered(lambda r: r.product_id == move_line.product_id)" t-as="raw_move_line">-->
+<!--                                                            <li>-->
+<!--                                                                <t t-set="domain" t-value="[('id', 'in', raw_move_line.move_line_ids.ids)]"/>-->
+<!--                                                                <a class="o_mrp_production_materials_action_multi"-->
+<!--                                                                    t-att-data-domain="domain"-->
+<!--                                                                    t-att-data-res-model="'stock.move.line'"-->
+<!--                                                                    t-att-style="style">-->
+<!--                                                                    <t t-raw="'[%s] %s::%s (%s)' % (raw_move_line.picking_id.display_name, raw_move_line.display_name, raw_move_line.quantity_done, len(raw_move_line.move_line_ids.ids))"/>-->
+<!--                                                                </a>-->
+<!--                                                            </li>-->
+<!--                                                        </t>-->
+<!--                                                    </t>-->
+<!--                                                </ul>-->
+<!--                                            </td>-->
+                                        </t>
+                                        <t t-else="">
+                                            <tr>
+                                                <td colspan="100">
+                                                    <ul class="list-inline" t-if="move_line.picking_ids">
+                                                        <t t-foreach="move_line.picking_ids" t-as="raw_picking">
+                                                            <li>
+                                                                <a class="o_mrp_production_materials_action"
+                                                                    t-att-data-active-id="raw_picking.id"
+                                                                    t-att-data-res-model="'stock.picking'"
+                                                                    t-att-style="style">
+                                                                    <t t-raw="raw_picking.display_name"/>
+                                                                </a>
+                                                            </li>
+                                                        </t>
+                                                    </ul>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                    <t t-if="not o.report_no_detail and move_line.move_ids">
+                                        <t t-if="o.report_small and move_line.move_ids">
+                                            <tr>
+                                                <td colspan="100">
+                                                    <ul class="list-inline">
+                                                        <t t-foreach="move_line.move_ids" t-as="raw_move_line">
+                                                            <li>
+                                                                <a class="o_mrp_production_materials_action"
+                                                                    t-att-data-active-id="raw_move_line.id"
+                                                                    t-att-data-res-model="'stock.move'"
+                                                                    t-att-style="style">
+                                                                    <t t-raw="'(%s) %s: %s::%s*%s=%s' % (raw_move_line.raw_material_production_id.state or '', raw_move_line.raw_material_production_id.product_id.display_name or '', raw_move_line.raw_material_production_id.product_qty, raw_move_line.raw_material_production_id.product_qty,raw_move_line.unit_factor, float_round(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom.rounding))"/>
+                                                                </a>
+                                                            </li>
+                                                        </t>
+                                                    </ul>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <tr t-foreach="move_line.move_ids.filtered(lambda r: r.raw_material_production_id)" t-as="raw_move_line" t-if="not o.report_small">
                                             <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''">
                                                 <span t-esc="'%s.%s' % (move_line_index+1, raw_move_line_index+1)"/>
                                             </td>
                                             <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''">
-                                                <strong><span t-esc="'(%s) %s: %s' % (raw_move_line.raw_material_production_id.state, raw_move_line.raw_material_production_id.display_name, raw_move_line.raw_material_production_id.product_qty)"/></strong>
+                                                <t t-set="dates" t-value="[]"/>
+                                                <t t-foreach="raw_move_line.raw_material_production_id.sale_line_ids" t-as="raw_sale_order_line">
+                                                    <t t-set="dates" t-value="dates+[x.date_confirmed for x in raw_sale_order_line.requested_date_ids]"/>
+                                                </t>
+                                                <strong>
+                                                    <a class="o_mrp_production_materials_action"
+                                                        t-att-data-active-id="raw_move_line.raw_material_production_id.id"
+                                                        t-att-data-res-model="'mrp.production'"
+                                                        t-att-style="style">
+                                                        <t t-raw="'(%s) %s [%s] %s::%s*%s=%s' % (raw_move_line.raw_material_production_id.state, raw_move_line.raw_material_production_id.display_name, dates and ' '.join(dates) or '', raw_move_line.raw_material_production_id.product_qty, raw_move_line.raw_material_production_id.product_qty,raw_move_line.unit_factor, float_round(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom.rounding))"/>
+                                                    </a>
+                                                </strong>
+                                                <br/>
+                                                <span t-field="raw_move_line.operation_id"/>
+                                                <br t-if="raw_move_line.bom_line_id.description"/>
+                                                <span t-field="raw_move_line.bom_line_id.description" t-if="raw_move_line.bom_line_id.description"/>
                                                 <br/>
                                                 <span t-esc="raw_move_line.raw_material_production_id.product_id.display_name"/>
                                                 <br/>
@@ -138,7 +322,7 @@
                                                     t-att-style="style">
                                                     <t t-raw="raw_move_line.raw_material_production_id.bom_id.display_name"/>
                                                 </a>
-                                                <t t-if="raw_move_line.raw_material_production_id.product_id.bom_ids[-1] != raw_move_line.raw_material_production_id.bom_id">
+                                                <t t-if="raw_move_line.raw_material_production_id and raw_move_line.raw_material_production_id.product_id.bom_ids[-1] != raw_move_line.raw_material_production_id.bom_id">
                                                     <a class="o_mrp_production_materials_action"
                                                         t-att-data-active-id="raw_move_line.raw_material_production_id.product_id.bom_ids[-1].id"
                                                         t-att-data-res-model="'mrp.bom'"
@@ -146,11 +330,11 @@
                                                         <t t-raw="raw_move_line.raw_material_production_id.product_id.bom_ids[-1].display_name"/>
                                                     </a>
                                                 </t>
-                                                <br/>
-                                                <span t-esc="raw_move_line.product_uom_qty"/> :: <span t-esc="raw_move_line.raw_material_production_id.product_qty"/>*<span t-field="raw_move_line.unit_factor"/>=<span t-esc="float_round(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom.rounding)" t-options='{"widget": "float", "precision": 3}'/>
+<!--                                                <br/>-->
+<!--                                                <span t-esc="raw_move_line.product_uom_qty"/> :: <span t-esc="raw_move_line.raw_material_production_id.product_qty"/>*<span t-field="raw_move_line.unit_factor"/>=<span t-esc="float_round(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom.rounding)" t-options='{"widget": "float", "precision": 3}'/>-->
                                             </td>
                                             <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''" class="text-right">
-                                                <span t-feld="raw_move_line.product_uom"/>
+                                                <span t-field="raw_move_line.product_uom"/>
                                             </td>
                                             <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''" class="text-right">
                                                 <span t-field="raw_move_line.product_uom_qty"/>
@@ -166,24 +350,46 @@
                                             </td>
                                         </tr>
                                     </t>
+                                    <tr t-foreach="move_line.purchase_ids" t-as="purchase" groups="base.group_no_one">
+                                        <td style="border-top: 0; width: 5%;"/>
+                                        <td style="border-top: 0; width: 15%;">
+                                            <a class="o_mrp_production_materials_action"
+                                                t-att-data-active-id="purchase.product_id.id"
+                                                t-att-data-res-model="'product.product'"
+                                                t-att-style="style">
+                                                <t t-raw="'%s-%s' % (purchase.order_id.display_name, purchase.product_id.display_name)"/>
+                                            </a>
+                                        </td>
+                                        <td class="text-left" style="border-top: 0; width: 10%;">
+                                            <span t-field="purchase.product_uom"/>
+                                        </td>
+                                        <td class="text-right" style="border-top: 0; width: 10%;">
+                                            <span t-field="purchase.product_qty"/>
+                                        </td>
+                                        <td class="text-right" style="border-top: 0; width: 10%;"/>
+                                        <td class="text-right" style="border-top: 0; width: 10%;">
+                                            <span t-field="purchase.qty_received"/>
+                                        </td>
+                                        <td class="text-right" style="border-top: 0; width: 10%;"/>
+                                    </tr>
                                 </t>
                             </tbody>
                         </table>
                     </div>
                 </div>
-<!--                <t t-call="l10n_bg_extend.approval_signatures" groups="report_theming.group_show_signatures"/>-->
+    <!--                <t t-call="l10n_bg_extend.approval_signatures" groups="report_theming.group_show_signatures"/>-->
             </div>
         </t>
     </template>
 
     <template id="mrp_production_material_document">
-        <t t-call="web.internal_layout">
-            <t t-if="o.destination_location_id.partner_id">
-                <t t-set="o" t-value="o.with_context({'lang':o.destination_location_id.partner_id.lang})"/>
-                <t t-set="partner" t-value="o.destination_location_id.partner_id"/>
+        <t t-call="web.external_layout">
+            <t t-if="o.destination_location_id.out_partner_id">
+                <t t-set="o" t-value="o.with_context({'lang':o.destination_location_id.out_partner_id.lang})"/>
+                <t t-set="partner" t-value="o.destination_location_id.out_partner_id"/>
             </t>
             <t t-else="">
-                <t t-set="o" t-value="o.with_context({'lang':o.partner_id.lang})" />
+<!--                <t t-set="o" t-value="o.with_context({'lang':o.partner_id.lang})" />-->
                 <t t-set="partner" t-value="o.partner_id"/>
             </t>
             <div class="page">
@@ -199,12 +405,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="row" name="customer_address">
+                <div class="row" name="customer_address" t-if="o.destination_location_id.partner_id">
                     <div class="col-xs-4 pull-right" style="margin-right: 15px;" id="informations" name="warehouse">
                         <div>
                             <span><strong>Warehouse Address:</strong></span>
                         </div>
-                        <div t-if="o.destination_location_id.partner_id">
+                        <div>
                             <div t-if="o.destination_location_id.partner_id.parent_id" t-field="o.destination_location_id.partner_id.parent_id.name"/>
                             <div t-field="o.destination_location_id.partner_id.parent_id"
                                t-options='{"widget": "contact", "fields": ["address", "phone", "mobile"], "no_marker": True}'/>
@@ -239,15 +445,13 @@
                         <table class="table table-condensed" t-if="o.stock_move_location_line_ids">
                             <thead>
                                 <tr>
-                                    <th>Nr #</th>
-                                    <th><strong>Product</strong></th>
-                                    <th><strong>Operation</strong></th>
-                                    <th><strong>Remarks</strong></th>
-                                    <th class="text-center"><strong>Unit measure</strong></th>
-                                    <th class="text-center"><strong>Quantity</strong></th>
-                                    <th class="text-center">Total quantity</th>
-                                    <th class="text-center">Special Transferred quantity</th>
-                                    <th class="text-center">Rest quantity</th>
+                                    <th class="text-center" style="width: 5%;">Nr #</th>
+                                    <th class="text-left" style="width: 55%;"><strong>Product</strong></th>
+                                    <th class="text-left" style="width: 10%;"><strong>Unit measure</strong></th>
+                                    <th class="text-center" style="width: 10%;"><strong>Quantity</strong></th>
+<!--                                    <th class="text-center" style="width: 10%;">Total quantity</th>-->
+                                    <th class="text-center" style="width: 10%;">Special Transferred quantity</th>
+                                    <th class="text-center" style="width: 10%;">Rest quantity</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -261,19 +465,19 @@
                                             <br/>
                                             To produce: <span t-field="move_line.product_qty"/>
                                         </td>
-                                        <td/>
-                                        <td/>
                                         <td class="text-right">
                                             <span t-field="move_line.product_uom"/>
+                                            <br/>
+                                            <span t-field="move_line.unit_factor"/>
                                         </td>
                                         <td class="text-right">
                                             <span t-field="move_line.product_uom_qty"/>
                                             <br/>
                                             <span t-field="move_line.consumed_product_uom_qty"/>
                                         </td>
-                                        <td class="text-right">
-                                            <span t-field="move_line.exclude_product_uom_qty"/>
-                                        </td>
+<!--                                        <td class="text-right">-->
+<!--                                            <span t-field="move_line.exclude_product_uom_qty"/>-->
+<!--                                        </td>-->
                                         <td class="text-right">
                                             <span t-field="move_line.transfers_quantity"/>
                                         </td>
@@ -286,7 +490,7 @@
                                             <span t-esc="'-'.join([x.name for x in move_line.picking_ids])"/>
                                         </td>
                                     </tr>
-                                    <t t-if="move_line.move_ids">
+                                    <t t-if="(not o.report_small or not o.report_no_detail) and move_line.move_ids">
                                         <t t-set="production_id" t-value="False"/>
                                         <t t-set="product_tmpl_id" t-value="False"/>
                                         <t t-foreach="move_line.move_ids.sorted(lambda r: '%s-%s' % (r.raw_material_production_id.product_tmpl_id.display_name, r.raw_material_production_id.name))" t-as="raw_move_line">
@@ -314,7 +518,7 @@
                                                         <span t-esc="raw_move_line.raw_material_production_id.origin"/><t t-if="raw_move_line.raw_material_production_id.analytic_account_id">:<span t-esc="raw_move_line.raw_material_production_id.analytic_account_id.display_name"/></t>
                                                         <br/>
                                                         <span t-esc="raw_move_line.raw_material_production_id.bom_id.display_name"/>
-                                                        <t t-if="raw_move_line.raw_material_production_id.product_id.bom_ids[-1] != raw_move_line.raw_material_production_id.bom_id">
+                                                        <t t-if="len(raw_move_line.raw_material_production_id.product_id.bom_ids) > 0 and raw_move_line.raw_material_production_id.product_id.bom_ids[-1] != raw_move_line.raw_material_production_id.bom_id">
                                                             - <span t-esc="raw_move_line.raw_material_production_id.product_id.bom_ids[-1].display_name"/>
                                                         </t>
                                                     </td>
@@ -324,27 +528,25 @@
                                                 <td style="border-top: 0;"/>
                                                 <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'">
                                                     <span t-field="raw_move_line.operation_id"/>
-                                                </td>
-                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'">
-                                                    <span t-field="raw_move_line.bom_line_id.description"/>
-                                                </td>
-                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'">
+                                                    <br t-if="raw_move_line.bom_line_id.description"/>
+                                                    <span t-field="raw_move_line.bom_line_id.description" t-if="raw_move_line.bom_line_id.description"/>
+                                                    <br/>
                                                     <strong><span t-esc="raw_move_line.raw_material_production_id.product_qty"/>*<span t-field="raw_move_line.unit_factor"/>=<span t-esc="float_round(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom.rounding)" t-options='{"widget": "float", "precision": 3}'/>(<span t-esc="raw_move_line.product_uom_qty" t-options='{"widget": "float", "precision": 3}'/>)</strong>
                                                 </td>
-                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'" class="text-right">
-                                                    <strong><span t-feld="raw_move_line.product_uom"/></strong>
+                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''" class="text-right">
+                                                    <span t-field="raw_move_line.product_uom"/>
                                                 </td>
-                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'" class="text-right">
-                                                    <strong><span t-field="raw_move_line.product_uom_qty"/></strong>
+                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''" class="text-right">
+                                                    <span t-field="raw_move_line.product_uom_qty"/>
                                                 </td>
-                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'" class="text-right">
-                                                    <strong><span t-field="raw_move_line.reserved_availability"/></strong>
+<!--                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''" class="text-right">-->
+<!--                                                    <span t-field="raw_move_line.reserved_availability"/>-->
+<!--                                                </td>-->
+                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''" class="text-right">
+                                                    <span t-field="raw_move_line.quantity_done"/>
                                                 </td>
-                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'" class="text-right">
-                                                    <strong><span t-field="raw_move_line.quantity_done"/></strong>
-                                                </td>
-                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;border-top: 0;' or 'border-top: 0;'" class="text-right">
-                                                    <strong><span t-esc="float_round(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom.rounding)" t-options='{"widget": "float", "precision": 3}'/></strong>
+                                                <td t-att-style="float_compare(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom_qty, raw_move_line.product_uom.rounding) != 0 and 'color: red;' or ''" class="text-right">
+                                                    <span t-esc="float_round(raw_move_line.unit_factor*raw_move_line.raw_material_production_id.product_qty, raw_move_line.product_uom.rounding)" t-options='{"widget": "float", "precision": 3}'/>
                                                 </td>
                                             </tr>
                                         </t>
@@ -376,9 +578,17 @@
     <report id="action_mrp_order_materials"
         model="mrp.production"
         report_type="qweb-html"
-        menu="True"
+        menu="False"
         string="Report for consumption"
         name="mrp_report_materials.mrp_consumption"
         file="mrp_report_materials.mrp_consumption"
     />
+    <report id="action_mrp_order_materials_report_xlsx"
+        model="mrp.production"
+        name="mp_cm.report_mrp_product_materials_xlsx"
+        file="report_mrp_product_materials"
+        string="Report for consumption"
+        menu="False"
+        report_type="xlsx"
+        attachment_use="False"/>
 </odoo>

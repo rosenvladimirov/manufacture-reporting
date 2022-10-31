@@ -10,14 +10,20 @@
     'author': 'Rosen Vladimirov, BioPrint Ltd.,Odoo Community Association (OCA)',
     'website': 'https://github.com/rosenvladimirov/manufacture-reporting',
     'depends': [
+        'project_mrp',
+        'sale_order_line_date',
         'stock',
         'mrp',
         'l10n_bg_extend',
+        'mrp_stock_move_location',
+        'report_xlsx',
     ],
     'data': [
         'security/ir.model.access.csv',
         'reports/mrp_production_material.xml',
         'views/report_template.xml',
+        'views/report_accepted_delivery.xml',
+        'wizards/mrp_report_materials.xml',
     ],
     'qweb': [
         'static/src/xml/mrp_production_materials_template.xml',

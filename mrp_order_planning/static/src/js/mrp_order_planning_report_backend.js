@@ -19,10 +19,10 @@ var MrpVariantMgmtReportBackend = Widget.extend(ControlPanelMixin, {
             this.given_context = action.context.context;
         }
         this.given_context.active_id = action.context.active_id || action.params.active_id;
-        this.given_context.active_model = action.context.active_model || false;
+        this.given_context.active_ids = action.context.active_ids || action.params.active_ids;
+        this.given_context.model = action.context.active_model || false;
         this.given_context.ttype = action.context.ttype || false;
-        this.given_context.model = action.context.model || false;
-        console.log('INIT', this.odoo_context);
+        // console.log('INIT', this.odoo_context);
         return this._super.apply(this, arguments);
     },
     willStart: function() {
@@ -46,7 +46,7 @@ var MrpVariantMgmtReportBackend = Widget.extend(ControlPanelMixin, {
         var cp_buttons = this._rpc({
                 model: self.given_context.model,
                 method: 'get_buttons',
-                args: [self.odoo_context],
+                args: [self.given_context.active_id],
                 context: self.odoo_context,
             })
             .then(function(result){
@@ -65,7 +65,7 @@ var MrpVariantMgmtReportBackend = Widget.extend(ControlPanelMixin, {
         return this._rpc({
                 model: this.given_context.model,
                 method: 'get_html',
-                args: [self.odoo_context],
+                args: [self.given_context],
                 context: self.odoo_context,
             })
             .then(function (result) {
@@ -105,7 +105,7 @@ var MrpVariantMgmtReportBackend = Widget.extend(ControlPanelMixin, {
                 return self._rpc({
                         model: self.given_context.model,
                         method: 'print_report',
-                        args: [0, $(el).attr('data-ttype'), $(el).attr('data-id')],
+                        args: [self.given_context.active_id, $(el).attr('data-ttype'), self.given_context],
                         context: self.odoo_context,
                     })
                     .then(function(result){
@@ -133,7 +133,7 @@ var MrpVariantMgmtReportBackend = Widget.extend(ControlPanelMixin, {
             return this._rpc({
                     model: this.given_context.model,
                     method: 'print_report',
-                    args: [0, ttype, type],
+                    args: [self.given_context.active_id, ttype, self.given_context],
                     context: self.odoo_context,
                 })
                 .then(function(result){
