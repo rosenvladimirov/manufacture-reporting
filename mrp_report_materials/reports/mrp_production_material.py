@@ -19,7 +19,7 @@ class MrpReportMaterial(models.AbstractModel):
 
     @api.model
     def get_report_values(self, docids, data=None):
-        _logger.info("mrp_report_materials context %s:%s:%s" % (self._context, docids, data))
+        # _logger.info("mrp_report_materials context %s:%s:%s" % (self._context, docids, data))
 
         if data.get('production_ids', False):
             docids = data['production_ids']
@@ -105,7 +105,7 @@ class MrpReportMaterialProductAbstract(models.TransientModel):
     @api.model
     def default_get(self, fields_list):
         res = super(MrpReportMaterialProductAbstract, self).default_get(fields_list)
-        _logger.info("CONTEXT %s" % self._context)
+        # _logger.info("CONTEXT %s" % self._context)
         warehouse = self.env['stock.warehouse'].search([('company_id', '=', self.env.user.company_id.id)], limit=1)
         manufacture_route = self.env.ref('mrp.route_warehouse0_manufacture', raise_if_not_found=False)
         productions = False
@@ -269,10 +269,9 @@ class MrpReportMaterialProductAbstract(models.TransientModel):
         product_type_id = False
         production = move_line.raw_material_production_id
         sequence_product_type_id = move_line.sequence
-        if move_line.product_id.product_tmpl_id.categ_id.product_type_id:
-            product_type_id = move_line.product_id.product_tmpl_id.categ_id.get_product_type_id()
-            if product_type_id and product_type_id.sequence:
-                sequence_product_type_id = int(product_type_id.sequence)
+        product_type_id = move_line.product_id.product_tmpl_id.categ_id.get_product_type_id()
+        if product_type_id and product_type_id.sequence:
+            sequence_product_type_id = int(product_type_id.sequence)
 
         quant = self.env['stock.quant']
         exclude_picking_ids = productions.mapped('picking_move_ids')
@@ -295,6 +294,7 @@ class MrpReportMaterialProductAbstract(models.TransientModel):
                 purchase_product_qty = picking_qty < purchase_product_qty and picking_qty or purchase_product_qty
                 transfers_quantity += purchase_product_qty - line.product_uom. \
                     _compute_quantity(line.qty_received, move_line.product_uom)
+
                 # _logger.info("LINE %s" % transfers_quantity)
 
         else:
@@ -335,7 +335,7 @@ class MrpReportMaterialProductAbstract(models.TransientModel):
         # self.ensure_one()
         if given_context is None:
             given_context = dict(self._context)
-        _logger.info('PRINT REPORT %s:%s:%s' % (given_context, report_type, self._context))
+        # _logger.info('PRINT REPORT %s:%s:%s' % (given_context, report_type, self._context))
         if report_type == 'xlsx':
             action = self.env.ref('mrp_report_materials.action_mrp_order_materials_report_xlsx')
             return action.with_context(given_context).report_action(self, data={

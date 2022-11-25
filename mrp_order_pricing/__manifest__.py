@@ -10,6 +10,7 @@
     'author': 'Rosen Vladimirov, BioPrint Ltd.,Odoo Community Association (OCA)',
     'website': 'https://github.com/rosenvladimirov/manufacture-reporting',
     'depends': [
+        'sale',
         'mrp',
         'purchase',
         'stock',

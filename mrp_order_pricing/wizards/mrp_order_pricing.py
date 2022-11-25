@@ -19,9 +19,17 @@ class MrpReportPricingWizard(models.TransientModel):
     @api.model
     def default_get(self, fields_list):
         res = super(MrpReportPricingWizard, self).default_get(fields_list)
+        if not res.get('production_ids') and self._context.get('active_model') == 'sale.order':
+            sale_order_id = self.env['sale.order'].browse(self._context['active_ids'])
+            production_ids = self.env['mrp.production'].search([('sale_id', 'in', self._context['active_ids'])])
+            if production_ids:
+                res['production_ids'] = [(6, False, production_ids.ids)]
         if not res.get('production_ids') and self._context.get('active_model') == 'mrp.production':
             production_ids = self.env['mrp.production'].browse(self._context['active_ids'])
-            res['production_ids'] = [(6, False, production_ids.ids)]
+            if production_ids:
+                res['production_ids'] = [(6, False, production_ids.ids)]
+        if not res.get('production_ids'):
+            raise UserError(_('Not found any production!'))
         return res
 
     @api.multi

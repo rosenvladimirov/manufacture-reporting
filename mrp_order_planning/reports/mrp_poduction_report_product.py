@@ -136,9 +136,10 @@ class MrpProductReportProductAbstract(models.AbstractModel):
             production_ids = self._context.get('production_ids')
         if not production_ids:
             production_ids = docids
-        _logger.info("ORDER get_report_values order_id=>%s\n:_context=>%s\n::data=>%s\n::docids=>%s" % (
-            production_ids, self._context, data, docids))
-
+        # _logger.info("ORDER get_report_values order_id=>%s\n:_context=>%s\n::data=>%s\n::docids=>%s" % (
+        #     production_ids, self._context, data, docids))
+        active_model = self._context.get('active_model') or 'mrp.planning'
+        active_id = self._context.get('active_id', False)
         if not production_ids:
             return {
                 'doc_ids': docids,
@@ -147,7 +148,11 @@ class MrpProductReportProductAbstract(models.AbstractModel):
                 'context_timestamp': lambda t: fields.Datetime.context_timestamp(self.with_context(tz=self.env.user.tz),
                                                                                  t),
             }
-        report = self.env[self._context['active_model']].browse(self._context['active_id'])
+        if not active_id and production_ids:
+            mrp_planning_id = self.env['mrp.planning'].\
+                with_context(dict(self._context, production_ids=production_ids)).create({})
+            active_id = mrp_planning_id.ids
+        report = self.env[active_model].browse(active_id)
         # docs = self.env['mrp.production'].browse(production_ids)
         # _logger.info("DOCS %s:%s" % (docs, report and report.production_ids))
         doc, headers, sub_headers, footer, pages = self.env['mrp.production.report.product'].\
